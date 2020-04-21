@@ -87,3 +87,16 @@ if(NOT catch2_POPULATED)
 endif()
 
 # Add more CMake libraries here ...
+
+# Audio library
+FetchContent_Declare(
+        cinder-stk
+        GIT_REPOSITORY https://github.com/richardeakin/Cinder-Stk.git
+        GIT_TAG        origin/master
+)
+
+FetchContent_GetProperties(cinder-stk)
+if(NOT cinder-stk_POPULATED)
+    FetchContent_Populate(cinder-stk)
+    add_library(cinder-stk ${cinder-stk_SOURCE_DIR} ${cinder-stk_BINARY_DIR})
+endif()

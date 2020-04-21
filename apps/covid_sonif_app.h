@@ -6,7 +6,7 @@
 #include <cinder/app/App.h>
 
 
-namespace myapp {
+namespace covidsonifapp {
 
 class MyApp : public cinder::app::App {
  public:
@@ -17,6 +17,6 @@ class MyApp : public cinder::app::App {
   void keyDown(cinder::app::KeyEvent) override;
 };
 
-}  // namespace myapp
+}  // namespace covidsonifapp
 
 #endif  // FINALPROJECT_APPS_MYAPP_H_

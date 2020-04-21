@@ -3,14 +3,13 @@
 #include <cinder/app/App.h>
 #include <cinder/app/RendererGl.h>
 
-#include "my_app.h"
-
+#include "covid_sonif_app.h"
 
 using cinder::app::App;
 using cinder::app::RendererGl;
 
 
-namespace myapp {
+namespace covidsonifapp {
 
 const int kSamples = 8;
 const int kWidth = 1920;
@@ -21,10 +20,10 @@ void SetUp(App::Settings* settings) {
   settings->setTitle("COVID-19 Data Sonification");
 }
 
-}  // namespace myapp
+}  // namespace covidsonifapp
 
 
 // This is a macro that runs the application.
-CINDER_APP(myapp::MyApp,
-           RendererGl(RendererGl::Options().msaa(myapp::kSamples)),
-           myapp::SetUp)
+CINDER_APP(covidsonifapp::MyApp,
+           RendererGl(RendererGl::Options().msaa(covidsonifapp::kSamples)),
+           covidsonifapp::SetUp)
