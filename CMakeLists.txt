@@ -68,6 +68,7 @@ add_subdirectory(apps)
 # The tests are here.
 add_subdirectory(tests)
 
+
 ############## Third-party Libraries #####################
 
 # Testing library. Header-only.
@@ -95,8 +96,14 @@ FetchContent_Declare(
         GIT_TAG        origin/master
 )
 
+
 FetchContent_GetProperties(cinder-stk)
 if(NOT cinder-stk_POPULATED)
     FetchContent_Populate(cinder-stk)
     add_library(cinder-stk ${cinder-stk_SOURCE_DIR} ${cinder-stk_BINARY_DIR})
 endif()
+
+# Adding a line to set the linker language to C++.
+# https://stackoverflow.com/questions/11801186/cmake-unable-to-determine-linker-language-with-c
+# Not sure if it's necessary...
+set_target_properties(cinder-stk PROPERTIES LINKER_LANGUAGE CXX)
