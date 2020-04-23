@@ -23,7 +23,7 @@ using cinder::app::KeyEvent;
  * Overriden Cinder App Methods
  */
 
-CovidSonificationApp::CovidSonificationApp() { }
+CovidSonificationApp::CovidSonificationApp() = default;
 
 void CovidSonificationApp::setup() {
   auto ctx = cinder::audio::master();
@@ -55,9 +55,11 @@ void CovidSonificationApp::draw() {
 void CovidSonificationApp::mouseDown(cinder::app::MouseEvent event) {
   MakeNote(event.getPos());
 }
+
 void CovidSonificationApp::mouseDrag(cinder::app::MouseEvent event) {
   MakeNote(event.getPos());
 }
+
 void CovidSonificationApp::mouseUp(cinder::app::MouseEvent event) {
   if (instrument_) {
     instrument_->noteOff(0.5);
@@ -114,13 +116,12 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
 }
 
 /**
- * Returns a quantized pitch (in hertz) within the minor scale
- * TODO: add different scales
- * @param pos position of... mouse?
- * @return quantized pitch in minor scale
+ * Returns a quantized pitch (in hertz) within the C minor scale
+ * @param pos position of mouse
+ * @return quantized pitch in C minor scale
  */
 float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
-  // Define the minor scale
+  // Define the C minor scale
   const size_t scale_length = 7;
   float scale[scale_length] = {0, 2, 3, 5, 7, 8, 10 };
 
