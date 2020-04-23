@@ -6,8 +6,14 @@
 
 namespace covidsonifapp {
 
+const float kMaxPitchMidi = 80;
+const float kMinPitchMidi = 40;
 
 using cinder::app::KeyEvent;
+
+/*
+ * Overriden Cinder App Methods
+ */
 
 CovidSonificationApp::CovidSonificationApp() { }
 
@@ -38,7 +44,23 @@ void CovidSonificationApp::draw() {
   params_->draw();
 }
 
-void CovidSonificationApp::keyDown(KeyEvent event) { }
+void CovidSonificationApp::mouseDown(cinder::app::MouseEvent event) {
+  MakeNote(event.getPos());
+}
+void CovidSonificationApp::mouseDrag(cinder::app::MouseEvent event) {
+  MakeNote(event.getPos());
+}
+void CovidSonificationApp::mouseUp(cinder::app::MouseEvent event) {
+  if (instrument_) {
+    instrument_->noteOff(0.5);
+  } else if (generator_) {
+    generator_gain_->getParam()->applyRamp(0, 0.2f);
+  }
+}
+
+/*
+ * Stk-Cinder specific methods
+ */
 
 void CovidSonificationApp::SetupParams() {
   // Define parameters
@@ -53,9 +75,71 @@ void CovidSonificationApp::SetupParams() {
   SetupEffects();
 }
 
-void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {}
+void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
+  if (instrument_ && HandleInstrumentSpecificNote(pos))
+    return;
 
-float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) { return 0; }
+  // Get the quantized freq; check if it's significant enough to change
+  float freq = QuantizePitch(pos);
+  if (std::fabs(last_freq_ - freq) < 0.01f)
+    return;
+
+  // Calculate gain
+  float gain = 1.0f - pos.y / (float)getWindowHeight();
+
+  // Set frequency and gain to instrument/generator accordingly
+  if (instrument_) {
+    instrument_->noteOn(freq, gain);
+  } else if (generator_) {
+    generator_gain_->getParam()->applyRamp(gain, 0.05f);
+
+    auto blit_node = std::dynamic_pointer_cast<cistk::BlitNode>(generator_);
+    if (blit_node) {
+      blit_node->setFrequency(freq);
+      return;
+    }
+
+    auto granulator_node =
+        std::dynamic_pointer_cast<cistk::GranulateNode>(generator_);
+    if (granulator_node) return;
+  }
+}
+
+/**
+ * Returns a quantized pitch (in hertz) within the minor scale
+ * TODO: add different scales
+ * @param pos position of... mouse?
+ * @return quantized pitch in minor scale
+ */
+float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
+  // Define the minor scale
+  const size_t scale_length = 7;
+  float scale[scale_length] = {0, 2, 3, 5, 7, 8, 10 };
+
+  // Get the MIDI pitch
+  int pitch_midi = std::lroundf(cinder::lmap(
+      pos.x, 0.0f,
+      (float)getWindowWidth(), kMinPitchMidi, kMaxPitchMidi));
+
+  bool quantized = false;
+
+  // Decrease the scale degree of the note until it matches with a diatonic
+  // note in the minor key
+  while (!quantized) {
+    int note = pitch_midi % 12;
+    for (size_t i = 0; i < scale_length; i++) {
+      if (note == scale[i]) {
+        quantized = true;
+        break;
+      }
+    }
+    if (!quantized) {
+      pitch_midi--;
+    }
+  }
+
+  return cinder::audio::midiToFreq((float)pitch_midi);
+}
 
 void CovidSonificationApp::HandleInstrumentsSelected() {
   // Disconnect all currently used instruments
@@ -151,12 +235,122 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
   master_gain_ >> ctx->getOutput();
 }
 
-void CovidSonificationApp::HandleGeneratorSelected() {}
+void CovidSonificationApp::HandleGeneratorSelected() {
+  // Disconnect all instruments and generators before reassigning
+  if (instrument_) instrument_->disconnectAll();
+  if (generator_) generator_->disconnectAll();
 
-void CovidSonificationApp::HandleEffectSelected() {}
+  instrument_ = nullptr;
+  instrument_enum_selection_ = 0;  // set to "none"
 
-void CovidSonificationApp::HandleInstrumentSpecificNote(
-    const cinder::vec2& pos) {}
+  // Fetch the name of the generator
+  std::string name = generator_enum_names_.at(generator_enum_selection_);
+  CI_LOG_I("Selecting generator '" << name << "'");
+
+  // Assign the generator based on its name
+  auto ctx = cinder::audio::master();
+
+  if (name == "Blit") {
+    generator_ = ctx->makeNode<cistk::BlitNode>();
+  } else if (name == "Granulate") {
+    auto gen = ctx->makeNode<cistk::GranulateNode>(
+        1, stk::Stk::rawwavePath() + "ahh.raw", true);  // I don't understand this line...
+    generator_ = gen;
+  } else {
+    CI_LOG_E("Unknown generator name");
+    CI_ASSERT_NOT_REACHABLE();
+  }
+
+  // Run the generator signal through the effect if applicable
+  if (effect_) generator_ >> generator_gain_ >> effect_ >> master_gain_;
+  else         generator_ >> generator_gain_ >> master_gain_;
+
+  master_gain_ >> ctx->getOutput();
+}
+
+void CovidSonificationApp::HandleEffectSelected() {
+  // Effects can only be applied if a sound is generated/played.
+  CI_ASSERT( instrument_ || generator_ );
+
+  master_gain_->disconnectAll();
+  if( effect_ )
+    effect_->disconnectAll();
+
+  // Find the name of the specific effect
+  std::string name = effect_enum_names_.at(effect_enum_selection);
+  CI_LOG_I("Selecting effect '" << name << "'");
+
+  auto ctx = cinder::audio::master();
+
+  // Assign the effect accordingly
+  if( name == "none" ) {
+    // reset and bypass effect
+    effect_.reset();
+    instrument_ >> master_gain_ >> ctx->getOutput();
+    return;
+  } else if( name == "Echo" ) {
+    effect_ = ctx->makeNode<cistk::EchoNode>();
+  } else if( name == "Chorus" ) {
+    effect_ = ctx->makeNode<cistk::ChorusNode>();
+  } else if( name == "PitShift" ) {
+    auto effect = ctx->makeNode<cistk::PitShiftNode>();
+    effect->setShift( 0.5f );
+    effect_ = effect;
+  } else if( name == "LentPitShift" ) {
+    auto effect = ctx->makeNode<cistk::LentPitShiftNode>();
+    effect->setShift( 0.5f );
+    effect_ = effect;
+  } else if( name == "PRCRev" ) {
+    effect_ = ctx->makeNode<cistk::PRCRevNode>();
+  } else if( name == "JCRev" ) {
+    effect_ = ctx->makeNode<cistk::JCRevNode>();
+  } else if( name == "NRev" ) {
+    effect_ = ctx->makeNode<cistk::NRevNode>();
+  } else if( name == "FreeVerb" ) {
+    effect_ = ctx->makeNode<cistk::FreeVerbNode>();
+  } else {
+    CI_LOG_E( "Unknown effect name" );
+    CI_ASSERT_NOT_REACHABLE();
+  }
+
+  // Play either instrument or generator through effect
+  if( instrument_ ) instrument_ >> effect_;
+  else              generator_ >> effect_;
+
+  effect_ >> master_gain_ >> ctx->getOutput();
+}
+
+/**
+ * Cinder-Stk Documentation: Returns true if the note was handled completely and
+ * makeNote() shouldn't do anything else
+ *
+ * Renzo: I believe this handles an edge case where two specific instruments
+ * (being Mesh2D and ModalBar) have to be dealt with individually... not sure tho
+ * @param pos position of... mouse?
+ */
+bool CovidSonificationApp::HandleInstrumentSpecificNote(
+    const cinder::vec2& pos) {
+  // Not sure what this does yet...
+  cinder::vec2 pos_normalized =
+      glm::clamp(pos / cinder::vec2(getWindowSize()),
+          cinder::vec2(0),
+          cinder::vec2(1));
+
+  auto mesh_2d = std::dynamic_pointer_cast<cistk::Mesh2DNode>(instrument_);
+  if (mesh_2d) {
+    mesh_2d->setInputPosition(pos_normalized.x, pos_normalized.y);
+    instrument_->noteOn(0, 1.0f);
+    return true;
+  }
+
+  auto modal_bar = std::dynamic_pointer_cast<cistk::ModalBarNode>(instrument_);
+  if (modal_bar) {
+    modal_bar->setStickHardness(pos_normalized.y);
+    return false;
+  }
+
+  return false;
+}
 
 void CovidSonificationApp::PrintAudioGraph() {
   CI_LOG_I("\n" << cinder::audio::master()->printGraphToString());

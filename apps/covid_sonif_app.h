@@ -19,13 +19,22 @@
 
 namespace covidsonifapp {
 
+/**
+ * Test application using source code from the StkTestApp:
+ * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
+ *
+ * Meant as an initial means of testing the Stk-Cinder library.
+ * Integration with COVID-19 data will follow after testing succeeds.
+ */
 class CovidSonificationApp : public cinder::app::App {
  public:
   CovidSonificationApp();
   void setup() override;
   void update() override;
   void draw() override;
-  void keyDown(cinder::app::KeyEvent) override;
+  void mouseDown(cinder::app::MouseEvent event) override;
+  void mouseDrag(cinder::app::MouseEvent event) override;
+  void mouseUp(cinder::app::MouseEvent event) override;
 
  public:
   void SetupParams();
@@ -34,7 +43,7 @@ class CovidSonificationApp : public cinder::app::App {
   void HandleInstrumentsSelected();
   void HandleGeneratorSelected();
   void HandleEffectSelected();
-  void HandleInstrumentSpecificNote(const cinder::vec2 &pos);
+  bool HandleInstrumentSpecificNote(const cinder::vec2 &pos);
   void PrintAudioGraph();
 
  private:
@@ -61,6 +70,8 @@ class CovidSonificationApp : public cinder::app::App {
   size_t instrument_enum_selection_ = 13;
   size_t generator_enum_selection_ = 0;
   size_t effect_enum_selection = 7;
+
+  float last_freq_ = 0;
 };
 
 }  // namespace covidsonifapp
