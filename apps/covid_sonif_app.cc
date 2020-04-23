@@ -10,25 +10,25 @@
 #include <cinder/app/App.h>
 #include <cinder/audio/audio.h>
 
+#include <vector>
 
 namespace covidsonifapp {
 
 using cinder::app::KeyEvent;
 
+CovidSonificationApp::CovidSonificationApp() { }
 
-MyApp::MyApp() { }
-
-void MyApp::setup() {
+void CovidSonificationApp::setup() {
   stk::Stk::setSampleRate(
       ci::audio::master()->getSampleRate());  // 1) set the sample rate
   cistk::initRawwavePath();                   // 2) configure the path to the rawwaves folder
   std::cout << "Success!" << std::endl;
 }
 
-void MyApp::update() { }
+void CovidSonificationApp::update() { }
 
-void MyApp::draw() { }
+void CovidSonificationApp::draw() { }
 
-void MyApp::keyDown(KeyEvent event) { }
+void CovidSonificationApp::keyDown(KeyEvent event) { }
 
 }  // namespace covidsonifapp

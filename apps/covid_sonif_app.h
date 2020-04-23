@@ -8,9 +8,9 @@
 
 namespace covidsonifapp {
 
-class MyApp : public cinder::app::App {
+class CovidSonificationApp : public cinder::app::App {
  public:
-  MyApp();
+  CovidSonificationApp();
   void setup() override;
   void update() override;
   void draw() override;

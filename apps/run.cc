@@ -24,6 +24,6 @@ void SetUp(App::Settings* settings) {
 
 
 // This is a macro that runs the application.
-CINDER_APP(covidsonifapp::MyApp,
+CINDER_APP(covidsonifapp::CovidSonificationApp,
            RendererGl(RendererGl::Options().msaa(covidsonifapp::kSamples)),
            covidsonifapp::SetUp)
