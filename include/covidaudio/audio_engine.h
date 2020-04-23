@@ -6,9 +6,8 @@
 namespace covidaudio {
 
 // Plays audio using engines provided by Synthesis ToolKit (STK)
-class AudioEngine {
+class AudioEngine { };
 
-}  // namespace covidaudio
-
+} // namespace covidaudio
 
 #endif // FINALPROJECT_MYLIBRARY_EXAMPLE_H_

@@ -4,6 +4,14 @@
 
 #include <iostream>
 
+/*
+ * All source code taken from StkTestApp:
+ * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
+ *
+ * This code is meant as a means to test the Cinder-Stk library.
+ * By writing it out myself, I hope to gain some insight into how the library
+ * works and how I can use it for my own project.
+ */
 namespace covidsonifapp {
 
 const float kMaxPitchMidi = 80;
@@ -225,7 +233,7 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
     instrument_ = ctx->makeNode<cistk::WhistleNode>();
   } else {
     CI_LOG_E("Unknown instrument name");
-    CI_ASSERT_NOT_REACHABLE();
+    // CI_ASSERT_NOT_REACHABLE();
   }
 
   // Set effect, if applicable
@@ -287,6 +295,8 @@ void CovidSonificationApp::HandleEffectSelected() {
     // reset and bypass effect
     effect_.reset();
     instrument_ >> master_gain_ >> ctx->getOutput();
+    if( instrument_ ) instrument_ >> master_gain_ >> ctx->getOutput();
+    else              generator_  >> master_gain_ >> ctx->getOutput();
     return;
   } else if( name == "Echo" ) {
     effect_ = ctx->makeNode<cistk::EchoNode>();
