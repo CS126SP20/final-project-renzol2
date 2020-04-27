@@ -28,7 +28,6 @@ CsvParser::CsvParser(const std::string& filename) {
 
 std::vector<CsvParser::Line> CsvParser::GetLines() { return lines_; }
 
-
 // Implementation taken from an answer on StackOverflow:
 // "Parse (split) a string in C++ using string delimiter (standard C++)"
 // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c#comment44856986_14266139
