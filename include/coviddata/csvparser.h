@@ -15,14 +15,14 @@ namespace coviddata {
 class CsvParser {
  public:
   struct Line {
-    std::vector<std::string> values;
+    std::vector<std::string> values{};
   };
 
   CsvParser(const std::string& filename);
-  std::vector<Line> ExportData();
+  std::vector<Line> GetLines();
 
  private:
-  std::vector<Line> lines_;
+  std::vector<Line> lines_{};
   static std::vector<std::string> SplitStr(const std::string& s,
                                            const std::string& delimiter);
 };

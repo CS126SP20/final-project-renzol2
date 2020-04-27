@@ -9,7 +9,7 @@
 
 namespace coviddata {
 
-CsvParser::CsvParser(const std::string& filename) : lines_() {
+CsvParser::CsvParser(const std::string& filename) {
   std::ifstream csv_file(filename);
 
   if (csv_file.fail()) {
@@ -26,7 +26,7 @@ CsvParser::CsvParser(const std::string& filename) : lines_() {
   }
 }
 
-std::vector<CsvParser::Line> CsvParser::ExportData() { return lines_; }
+std::vector<CsvParser::Line> CsvParser::GetLines() { return lines_; }
 
 
 // Implementation taken from an answer on StackOverflow:

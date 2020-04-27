@@ -37,3 +37,5 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     target_compile_options(test PRIVATE
             /W3)
 endif ()
+
+set_property(TARGET test APPEND_STRING PROPERTY LINK_FLAGS " /SUBSYSTEM:CONSOLE")
