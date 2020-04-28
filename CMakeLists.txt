@@ -68,6 +68,8 @@ add_subdirectory(apps)
 # The tests are here.
 add_subdirectory(tests)
 
+# for seeing contents of STL containers in debug mode
+set(CMAKE_CXX_FLAGS “${CMAKE_CXX_FLAGS} -stdlib=libstdc++”)
 
 ############## Third-party Libraries #####################
 
@@ -107,3 +109,4 @@ endif()
 # https://stackoverflow.com/questions/11801186/cmake-unable-to-determine-linker-language-with-c
 # Not sure if it's necessary...
 set_target_properties(cinder-stk PROPERTIES LINKER_LANGUAGE CXX)
+

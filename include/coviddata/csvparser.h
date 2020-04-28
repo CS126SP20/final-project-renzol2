@@ -5,8 +5,6 @@
 #ifndef FINALPROJECT_CSVPARSER_H
 #define FINALPROJECT_CSVPARSER_H
 
-#include "datapoint.h"
-
 #include <string>
 #include <vector>
 
@@ -19,12 +17,14 @@ class CsvParser {
   };
 
   CsvParser(const std::string& filename);
-  std::vector<Line> GetLines();
+  std::vector<Line>& GetLines();
+  bool Fail() const;
 
  private:
   std::vector<Line> lines_{};
   static std::vector<std::string> SplitStr(const std::string& s,
                                            const std::string& delimiter);
+  bool fail_;
 };
 
 } // namespace coviddata

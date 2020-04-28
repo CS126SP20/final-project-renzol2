@@ -11,11 +11,15 @@
 
 namespace coviddata {
 
-DataSet::DataSet() : region_to_data_() { }
+const int kNullAmount = -1;
+
+DataSet::DataSet() : region_to_data_(), regions_() { }
 
 void DataSet::ImportData(const std::string& filename) {
   // Get data from .csv file and assign its filename
   coviddata::CsvParser parser(filename);
+  if (parser.Fail()) throw std::invalid_argument("File does not exist");
+
   data_type_ = filename;
 
   using Line = CsvParser::Line;
@@ -35,7 +39,7 @@ void DataSet::ImportData(const std::string& filename) {
          region_index++) {
       // Find the particular region and its corresponding data
       std::string region_name = header.values.at(region_index);
-      RegionData region_data = region_to_data_.at(region_name);
+      RegionData& region_data = region_to_data_.at(region_name);
 
       // Update the data with information from the line in the .csv file
       std::string date = current_line.values.at(0);
@@ -44,6 +48,15 @@ void DataSet::ImportData(const std::string& filename) {
     }
   }
 }
+
+size_t DataSet::Size() { return region_to_data_.size(); }
+
+coviddata::RegionData& DataSet::GetRegionDataByName(
+    const std::string& region_name) {
+  return region_to_data_.at(region_name);
+}
+
+std::vector<std::string>& DataSet::GetRegions() { return regions_; }
 
 /**
  * Extracts all regions from the header of .csv file
@@ -59,19 +72,24 @@ void DataSet::InitializeRegionalData(coviddata::CsvParser::Line header) {
        region_index++) {
     // Extract region name and create data for each region
     std::string region_name = header.values.at(region_index);
+    regions_.push_back(region_name);
 
     RegionData region_data(region_name, region_index);
-    region_to_data_[region_name] = region_data;
+    region_to_data_.insert({region_name, region_data});
   }
 }
 
 
 int DataSet::GetIntFromString(const std::string& integer_string) {
+  // Empty entries cannot be converted into integers
+  if (integer_string.empty())
+    return kNullAmount;
+
   std::stringstream int_string(integer_string);
   int integer;
   int_string >> integer;
+
   return integer;
 }
-
 
 }  // namespace coviddata

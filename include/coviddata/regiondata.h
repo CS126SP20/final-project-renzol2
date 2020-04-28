@@ -5,9 +5,8 @@
 #ifndef FINALPROJECT_REGIONDATA_H
 #define FINALPROJECT_REGIONDATA_H
 
-#include "coviddata/datapoint.h"
-
 #include <map>
+#include <string>
 
 namespace coviddata {
 
@@ -16,12 +15,13 @@ namespace coviddata {
  */
 class RegionData {
  public:
-  RegionData() = default;
+  RegionData();
   RegionData(const std::string& region_name, size_t region_index);
   void SetAmountToDate(const std::string& date, int amount);
   int GetAmountAtDate(const std::string& date) const;
   std::string GetRegionName() const;
   size_t GetRegionIndex() const;
+  size_t Size() const;
 
  private:
   std::string region_name_;

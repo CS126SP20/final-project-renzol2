@@ -5,11 +5,11 @@
 #ifndef FINALPROJECT_DATASET_H
 #define FINALPROJECT_DATASET_H
 
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 #include "csvparser.h"
-#include "datapoint.h"
 #include "regiondata.h"
 
 namespace coviddata {
@@ -21,8 +21,12 @@ class DataSet {
  public:
   DataSet();
   void ImportData(const std::string& filename);
+  size_t Size();
+  coviddata::RegionData& GetRegionDataByName(const std::string& region_name);
+  std::vector<std::string>& GetRegions();
  private:
   std::map<std::string, coviddata::RegionData> region_to_data_;
+  std::vector<std::string> regions_;
   std::string data_type_;
  private:
   void InitializeRegionalData(coviddata::CsvParser::Line header);

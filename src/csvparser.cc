@@ -9,11 +9,12 @@
 
 namespace coviddata {
 
-CsvParser::CsvParser(const std::string& filename) {
+CsvParser::CsvParser(const std::string& filename) : fail_(false) {
   std::ifstream csv_file(filename);
 
   if (csv_file.fail()) {
-    throw std::invalid_argument("File could not be read successfully.");
+    fail_ = true;
+    return;
   }
 
   std::istream& csv_filestream = csv_file;
@@ -26,7 +27,7 @@ CsvParser::CsvParser(const std::string& filename) {
   }
 }
 
-std::vector<CsvParser::Line> CsvParser::GetLines() { return lines_; }
+std::vector<CsvParser::Line>& CsvParser::GetLines() { return lines_; }
 
 // Implementation taken from an answer on StackOverflow:
 // "Parse (split) a string in C++ using string delimiter (standard C++)"
@@ -44,5 +45,7 @@ std::vector<std::string> CsvParser::SplitStr(const std::string& s, const std::st
 
   return split_string;
 }
+
+bool CsvParser::Fail() const { return fail_; }
 
 } // namespace coviddata
