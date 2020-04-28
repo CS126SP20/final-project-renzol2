@@ -14,8 +14,8 @@
  */
 namespace covidsonifapp {
 
-const float kMaxPitchMidi = 80;
-const float kMinPitchMidi = 40;
+const float kMaxPitchMidi = 108;
+const float kMinPitchMidi = 21;
 
 using cinder::app::KeyEvent;
 
@@ -95,7 +95,8 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
     return;
 
   // Calculate gain
-  float gain = 1.0f - pos.y / (float)getWindowHeight();
+  // float gain = 1.0f - pos.y / (float)getWindowHeight();  // original
+  float gain = std::abs(pos.x - 1.0f) / (float)getWindowWidth();
 
   // Set frequency and gain to instrument/generator accordingly
   if (instrument_) {
@@ -121,14 +122,16 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
  * @return quantized pitch in C minor scale
  */
 float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
-  // Define the C minor scale
+  // Define the minor scale
   const size_t scale_length = 7;
   float scale[scale_length] = {0, 2, 3, 5, 7, 8, 10 };
 
   // Get the MIDI pitch
+  // More precisely: creates a mapping from height of mouse on screen to
+  //  MIDI pitch, and finds the converted value of the pos.y of mouse
+  // This is VERY helpful.
   int pitch_midi = std::lroundf(cinder::lmap(
-      pos.x, 0.0f,
-      (float)getWindowWidth(), kMinPitchMidi, kMaxPitchMidi));
+      pos.y, (float)getWindowHeight(), 0.0f, kMinPitchMidi, kMaxPitchMidi));
 
   bool quantized = false;
 
@@ -365,6 +368,7 @@ bool CovidSonificationApp::HandleInstrumentSpecificNote(
 
 void CovidSonificationApp::PrintAudioGraph() {
   CI_LOG_I("\n" << cinder::audio::master()->printGraphToString());
+  std::cout << cinder::audio::master()->printGraphToString() << std::endl;
 }
 
 void CovidSonificationApp::SetupMasterGain() {
@@ -380,7 +384,6 @@ void CovidSonificationApp::SetupMasterGain() {
 
 void CovidSonificationApp::SetupInstruments() {
   // Define instrument names
-  // TODO: make this an actual enum
   instrument_enum_names_ = {
       "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
       "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
