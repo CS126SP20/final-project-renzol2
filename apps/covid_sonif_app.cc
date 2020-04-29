@@ -17,6 +17,11 @@ namespace covidsonifapp {
 const float kMaxPitchMidi = 108;
 const float kMinPitchMidi = 21;
 
+const std::vector<std::string> kDataFileNames = {
+    "C:\\Program Files\\Cinder\\my-projects\\final-project-renzol2\\assets\\data\\new_cases.csv",
+    "C:\\Program Files\\Cinder\\my-projects\\final-project-renzol2\\assets\\data\\total_cases.csv"
+};
+
 using cinder::app::KeyEvent;
 
 /*
@@ -40,6 +45,7 @@ void CovidSonificationApp::setup() {
   SetupParams();
   HandleInstrumentsSelected();
   HandleEffectSelected();
+  HandleDataSelected();
   ctx->enable();
 
   PrintAudioGraph();
@@ -83,6 +89,7 @@ void CovidSonificationApp::SetupParams() {
   SetupInstruments();
   SetupGenerators();
   SetupEffects();
+  SetupData();
 }
 
 void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
@@ -163,7 +170,7 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
   generator_gain_->setValue(0);
 
   // Get the name of selected instrument and notify user
-  std::string name = instrument_enum_names_.at(instrument_enum_selection_);
+  std::string name = instrument_names_.at(instrument_enum_selection_);
   CI_LOG_I("Selecting instrument '" << name << "'" );
 
   // Set instrument accordingly
@@ -256,7 +263,7 @@ void CovidSonificationApp::HandleGeneratorSelected() {
   instrument_enum_selection_ = 0;  // set to "none"
 
   // Fetch the name of the generator
-  std::string name = generator_enum_names_.at(generator_enum_selection_);
+  std::string name = generator_names_.at(generator_enum_selection_);
   CI_LOG_I("Selecting generator '" << name << "'");
 
   // Assign the generator based on its name
@@ -289,7 +296,7 @@ void CovidSonificationApp::HandleEffectSelected() {
     effect_->disconnectAll();
 
   // Find the name of the specific effect
-  std::string name = effect_enum_names_.at(effect_enum_selection);
+  std::string name = effect_names_.at(effect_enum_selection);
   CI_LOG_I("Selecting effect '" << name << "'");
 
   auto ctx = cinder::audio::master();
@@ -333,6 +340,42 @@ void CovidSonificationApp::HandleEffectSelected() {
 
   effect_ >> master_gain_ >> ctx->getOutput();
 }
+
+void CovidSonificationApp::HandleDataSelected() {
+  current_data_.Reset();
+
+  // Find the name of the specific dataset
+  std::string name = dataset_names_.at(dataset_selection_);
+  CI_LOG_I("Selecting data: '" << name << "'");
+
+  if (name == "none") {
+    params_->removeParam("Region");
+  } else {
+    for (size_t i = 1; i < dataset_names_.size(); i++) {
+      if (name == dataset_names_.at(i)) {
+        // Indices are offset by 1 because dataset names must
+        // include "none" at the beginning.
+        const std::string& filename = kDataFileNames.at(i - 1);
+
+        current_data_.ImportData(filename);
+        region_names_ = current_data_.GetRegions();
+        SetupRegions();
+
+        break;
+      }
+    }
+  }
+}
+
+void CovidSonificationApp::HandleRegionSelected() {
+  current_region_ = current_data_.GetRegionDataByName(
+      region_names_.at(region_selection)
+      );
+}
+
+/*
+ * Private methods
+ */
 
 /**
  * Cinder-Stk Documentation: Returns true if the note was handled completely and
@@ -384,7 +427,7 @@ void CovidSonificationApp::SetupMasterGain() {
 
 void CovidSonificationApp::SetupInstruments() {
   // Define instrument names
-  instrument_enum_names_ = {
+  instrument_names_ = {
       "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
       "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
       "Moog",     "Plucked",  "Resonate", "Saxofony", "Shakers",  "Simple",
@@ -393,7 +436,7 @@ void CovidSonificationApp::SetupInstruments() {
 
   // Set instruments as a parameter
   params_
-      ->addParam("Instrument", instrument_enum_names_,
+      ->addParam("Instrument", instrument_names_,
                  (int*)&instrument_enum_selection_)  // double check this line
       .keyDecr("[")
       .keyIncr("]")
@@ -405,13 +448,13 @@ void CovidSonificationApp::SetupInstruments() {
 
 void CovidSonificationApp::SetupGenerators() {
   // Define generator names
-  generator_enum_names_ = {
+  generator_names_ = {
       "none", "Blit", "Granulate"
   };
 
   // Set generator as a parameter
   params_
-      ->addParam("Generator", generator_enum_names_,
+      ->addParam("Generator", generator_names_,
                  (int*)&generator_enum_selection_)
       .keyDecr("u")
       .keyIncr("i")
@@ -423,13 +466,13 @@ void CovidSonificationApp::SetupGenerators() {
 
 void CovidSonificationApp::SetupEffects() {
   // Define effects names
-  effect_enum_names_ = {
+  effect_names_ = {
       "none", "Echo", "Chorus", "PitShift", "LentPitShift",
       "PRCRev", "JCRev", "NRev", "FreeVerb"
   };
 
   // Add effects as parameter
-  params_->addParam("Effect", effect_enum_names_, (int*)&effect_enum_selection)
+  params_->addParam("Effect", effect_names_, (int*)&effect_enum_selection)
       .keyDecr("o")
       .keyIncr("p")
       .updateFn([this] {
@@ -438,5 +481,29 @@ void CovidSonificationApp::SetupEffects() {
       });
 }
 
+void CovidSonificationApp::SetupData() {
+  dataset_names_ = {"none", "New cases", "Total cases"};
+
+  params_->addParam("Data", dataset_names_, (int*)&dataset_selection_)
+      .keyDecr("t")
+      .keyIncr("y")
+      .updateFn([this] {
+        HandleDataSelected();
+        PrintAudioGraph();
+      });
+}
+
+void CovidSonificationApp::SetupRegions() {
+  // Data must be populated for regions to be setup
+  if (current_data_.Empty()) return;
+
+  params_->addParam("Region", region_names_, (int*)&region_selection)
+      .keyDecr("g")
+      .keyIncr("h")
+      .updateFn([this] {
+        HandleRegionSelected();
+        PrintAudioGraph();
+      });
+}
 
 }  // namespace covidsonifapp

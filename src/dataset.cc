@@ -16,6 +16,9 @@ const int kNullAmount = -1;
 DataSet::DataSet() : region_to_data_(), regions_() { }
 
 void DataSet::ImportData(const std::string& filename) {
+  // Reset before assigning data
+  Reset();
+
   // Get data from .csv file and assign its filename
   coviddata::CsvParser parser(filename);
   if (parser.Fail()) throw std::invalid_argument("File does not exist");
@@ -58,6 +61,16 @@ coviddata::RegionData& DataSet::GetRegionDataByName(
 
 std::vector<std::string>& DataSet::GetRegions() { return regions_; }
 
+void DataSet::Reset() {
+  region_to_data_.clear();
+  regions_.clear();
+  data_type_ = std::string();
+}
+
+bool DataSet::Empty() {
+  return region_to_data_.empty() && regions_.empty() && data_type_.empty();
+}
+
 /**
  * Extracts all regions from the header of .csv file
  *
@@ -91,5 +104,6 @@ int DataSet::GetIntFromString(const std::string& integer_string) {
 
   return integer;
 }
+
 
 }  // namespace coviddata

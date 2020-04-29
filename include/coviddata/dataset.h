@@ -24,6 +24,8 @@ class DataSet {
   size_t Size();
   coviddata::RegionData& GetRegionDataByName(const std::string& region_name);
   std::vector<std::string>& GetRegions();
+  void Reset();
+  bool Empty();
  private:
   std::map<std::string, coviddata::RegionData> region_to_data_;
   std::vector<std::string> regions_;
