@@ -14,6 +14,8 @@
 
 namespace coviddata {
 
+const int kNullAmount = -1;
+
 /*
  * Represents global and country-specific data for COVID-19.
  */
@@ -22,8 +24,9 @@ class DataSet {
   DataSet();
   void ImportData(const std::string& filename);
   size_t Size();
-  coviddata::RegionData& GetRegionDataByName(const std::string& region_name);
-  std::vector<std::string>& GetRegions();
+  coviddata::RegionData& GetRegionDataByName(
+      const std::string& region_name) const;
+  std::vector<std::string>& GetRegions() const;
   void Reset();
   bool Empty();
  private:

@@ -29,5 +29,14 @@ size_t RegionData::GetRegionIndex() const { return region_index_; }
 
 size_t RegionData::Size() const { return date_to_amount_.size(); }
 
+std::vector<std::string> RegionData::GetDates() const {
+  std::vector<std::string> dates;
+
+  for (auto & it : date_to_amount_) {
+    dates.push_back(it.first);
+  }
+
+  return dates;
+}
 
 }  // namespace coviddata

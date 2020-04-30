@@ -11,8 +11,6 @@
 
 namespace coviddata {
 
-const int kNullAmount = -1;
-
 DataSet::DataSet() : region_to_data_(), regions_() { }
 
 void DataSet::ImportData(const std::string& filename) {
@@ -55,11 +53,14 @@ void DataSet::ImportData(const std::string& filename) {
 size_t DataSet::Size() { return region_to_data_.size(); }
 
 coviddata::RegionData& DataSet::GetRegionDataByName(
-    const std::string& region_name) {
-  return region_to_data_.at(region_name);
+    const std::string& region_name) const {
+  const coviddata::RegionData& region_data = region_to_data_.at(region_name);
+  return const_cast<RegionData&>(region_data);  // double check this...
 }
 
-std::vector<std::string>& DataSet::GetRegions() { return regions_; }
+std::vector<std::string>& DataSet::GetRegions() const {
+  return (std::vector<std::string>&)regions_;
+}
 
 void DataSet::Reset() {
   region_to_data_.clear();

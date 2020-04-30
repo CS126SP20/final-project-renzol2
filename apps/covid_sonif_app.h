@@ -40,14 +40,18 @@ class CovidSonificationApp : public cinder::app::App {
  public:
   void SetupParams();
   void MakeNote(const cinder::vec2 &pos);
+  void MakeNoteFromAmount(int amount, int max_amount);
   float QuantizePitch(const cinder::vec2 &pos);
+  float QuantizePitchFromAmount(int amount, int max_amount);
+  void StopNote();
   void HandleInstrumentsSelected();
   void HandleGeneratorSelected();
   void HandleEffectSelected();
   bool HandleInstrumentSpecificNote(const cinder::vec2 &pos);
   void HandleDataSelected();
   void HandleRegionSelected();
-  void PrintAudioGraph();
+  void SonifyData();
+  static void PrintAudioGraph();
 
  private:
   void SetupMasterGain();
@@ -56,6 +60,9 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupEffects();
   void SetupData();
   void SetupRegions();
+  static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
+  static int GetHighestAmountInData(const coviddata::DataSet &ds,
+                                    bool include_world);
 
  private:
   ci::audio::GainNodeRef master_gain_;
@@ -77,6 +84,9 @@ class CovidSonificationApp : public cinder::app::App {
   // Containers for COVID-19 Data
   std::vector<std::string> dataset_names_;
   std::vector<std::string> region_names_;
+
+  // Instance variables for COVID-19 Data
+  int max_amount_ = 0;
 
   size_t instrument_enum_selection_ = 13;
   size_t generator_enum_selection_ = 0;

@@ -3,6 +3,8 @@
 #include "covid_sonif_app.h"
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 /*
  * All source code taken from StkTestApp:
@@ -14,12 +16,18 @@
  */
 namespace covidsonifapp {
 
-const float kMaxPitchMidi = 108;
-const float kMinPitchMidi = 21;
+const int kParamsWindowWidth = 300;
+const int kParamsWindowHeight = 700;
+
+// 21 and 108 are the lowest/highest keys on the piano keyboard, respectively
+const float kMaxPitchMidi = 100;  // originally 80
+const float kMinPitchMidi = 30;   // originally 40
+
+const size_t kNumPitchClasses = 12;
 
 const std::vector<std::string> kDataFileNames = {
-    "C:\\Program Files\\Cinder\\my-projects\\final-project-renzol2\\assets\\data\\new_cases.csv",
-    "C:\\Program Files\\Cinder\\my-projects\\final-project-renzol2\\assets\\data\\total_cases.csv"
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)"
 };
 
 using cinder::app::KeyEvent;
@@ -67,11 +75,7 @@ void CovidSonificationApp::mouseDrag(cinder::app::MouseEvent event) {
 }
 
 void CovidSonificationApp::mouseUp(cinder::app::MouseEvent event) {
-  if (instrument_) {
-    instrument_->noteOff(0.5);
-  } else if (generator_) {
-    generator_gain_->getParam()->applyRamp(0, 0.2f);
-  }
+  StopNote();
 }
 
 /*
@@ -82,14 +86,16 @@ void CovidSonificationApp::SetupParams() {
   // Define parameters
   params_ = cinder::params::InterfaceGl::create(
       getWindow(), "STK Params",
-      cinder::app::toPixels(cinder::ivec2(300, 200)));
+      cinder::app::toPixels(
+          cinder::ivec2(kParamsWindowWidth, kParamsWindowHeight)));
+
 
   // Setup all parameters for each instance variable
   SetupMasterGain();
   SetupInstruments();
   SetupGenerators();
   SetupEffects();
-  SetupData();
+  SetupData();  // region handled only if data is selected
 }
 
 void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
@@ -103,8 +109,38 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
 
   // Calculate gain
   // float gain = 1.0f - pos.y / (float)getWindowHeight();  // original
-  float gain = std::abs(pos.x - 1.0f) / (float)getWindowWidth();
+  float gain = 0.0f + pos.x / (float)getWindowWidth();
 
+  // Set frequency and gain to instrument/generator accordingly
+  if (instrument_) {
+    instrument_->noteOn(freq, gain);
+  } else if (generator_) {
+    generator_gain_->getParam()->applyRamp(gain, 0.05f);
+
+    auto blit_node = std::dynamic_pointer_cast<cistk::BlitNode>(generator_);
+    if (blit_node) {
+      blit_node->setFrequency(freq);
+      return;
+    }
+
+    auto granulator_node =
+        std::dynamic_pointer_cast<cistk::GranulateNode>(generator_);
+    if (granulator_node) return;
+  }
+}
+
+void CovidSonificationApp::MakeNoteFromAmount(const int amount,
+                                              const int max_amount) {
+  if (amount == coviddata::kNullAmount) return;
+
+  // Get the quantized freq; check if it's significant enough to change
+  float freq = QuantizePitchFromAmount(amount, max_amount);
+  if (std::fabs(last_freq_ - freq) < 0.01f) return;
+
+  // Calculate gain (set to 100% for now)
+  float gain = 0.85f;
+
+  // TODO: identical to other MakeNote, break into own function
   // Set frequency and gain to instrument/generator accordingly
   if (instrument_) {
     instrument_->noteOn(freq, gain);
@@ -145,7 +181,7 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
   // Decrease the scale degree of the note until it matches with a diatonic
   // note in the minor key
   while (!quantized) {
-    int note = pitch_midi % 12;
+    int note = pitch_midi % kNumPitchClasses;
     for (size_t i = 0; i < scale_length; i++) {
       if (note == scale[i]) {
         quantized = true;
@@ -155,6 +191,38 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
     if (!quantized) {
       pitch_midi--;
     }
+  }
+
+  return cinder::audio::midiToFreq((float)pitch_midi);
+}
+
+float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
+                                                    const int max_amount) {
+  // TODO: let the person choose scale
+  // Define some scale: minor for now
+  const size_t scale_length = 7;
+  float scale[scale_length] = { 0, 2, 3, 5, 7, 8, 10 };
+
+  // Creates a mapping from [0, highest amount in data]
+  //                     to [min MIDI pitch, max MIDI pitch]
+  // Then finds the mapping of the specific data point to a specific MIDI pitch
+  int pitch_midi = std::lroundf(cinder::lmap(
+      (float)amount, 0.0f, (float)max_amount, kMinPitchMidi, kMaxPitchMidi));
+
+  bool quantized = false;
+
+  // Decrease the scale degree of the note until it matches with a diatonic
+  // note in the minor key
+  while (!quantized) {
+    int note = pitch_midi % kNumPitchClasses;
+    for (size_t i = 0; i < scale_length; i++) {
+      if (note == scale[i]) {
+        quantized = true;
+        break;
+      }
+    }
+    if (!quantized)
+      pitch_midi--;
   }
 
   return cinder::audio::midiToFreq((float)pitch_midi);
@@ -350,7 +418,11 @@ void CovidSonificationApp::HandleDataSelected() {
 
   if (name == "none") {
     params_->removeParam("Region");
+    params_->removeParam("Sonify!");
   } else {
+    // Removing the "Sonify!" button ensures that it appears last in list
+    params_->removeParam("Sonify!");
+
     for (size_t i = 1; i < dataset_names_.size(); i++) {
       if (name == dataset_names_.at(i)) {
         // Indices are offset by 1 because dataset names must
@@ -360,6 +432,8 @@ void CovidSonificationApp::HandleDataSelected() {
         current_data_.ImportData(filename);
         region_names_ = current_data_.GetRegions();
         SetupRegions();
+
+        max_amount_ = GetHighestAmountInData(current_data_, false);
 
         break;
       }
@@ -493,6 +567,7 @@ void CovidSonificationApp::SetupData() {
       });
 }
 
+
 void CovidSonificationApp::SetupRegions() {
   // Data must be populated for regions to be setup
   if (current_data_.Empty()) return;
@@ -504,6 +579,71 @@ void CovidSonificationApp::SetupRegions() {
         HandleRegionSelected();
         PrintAudioGraph();
       });
+
+  params_->addButton("Sonify!", [this] { SonifyData(); });
+}
+
+void CovidSonificationApp::SonifyData() {
+  if (dataset_selection_ == 0) return;
+
+  // The max data point only includes the world data if the user wishes to hear
+  // the world data sonified.
+  // Reason: because world data is the SUM of all other regions' data,
+  //  any differences in other regions' data are barely heard.
+  max_amount_ = GetHighestAmountInData(
+      current_data_, current_region_.GetRegionName() == "World");
+  // Equivalent to "zooming in" the scale of a graph
+
+  for (const std::string& date : current_region_.GetDates()) {
+    MakeNoteFromAmount(current_region_.GetAmountAtDate(date), max_amount_);
+
+    // Pause for some time
+    // TODO: let user choose BPM
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+    // TODO: later: visualize
+    // visualization code will go here lol (or that may be handled by MakeNote)
+  }
+
+  StopNote();
+}
+
+int CovidSonificationApp::GetHighestRegionalAmount(
+    const coviddata::RegionData& rd) {
+  // Find highest note of regional dataset
+  int max_amount = 0;
+
+  for (const std::string& date : rd.GetDates()) {
+    int amount = rd.GetAmountAtDate(date);
+    if (amount > max_amount) max_amount = amount;
+  }
+
+  return max_amount;
+}
+
+int CovidSonificationApp::GetHighestAmountInData(const coviddata::DataSet& ds,
+                                                 bool include_world) {
+  int max_amount = 0;
+
+  for (const std::string& region_name : ds.GetRegions()) {
+    // Skips world if specified by user
+    if (!include_world && region_name == "World") continue;
+
+    coviddata::RegionData rd = ds.GetRegionDataByName(region_name);
+    int max_regional_amount = GetHighestRegionalAmount(rd);
+
+    if (max_regional_amount > max_amount) max_amount = max_regional_amount;
+  }
+
+  return max_amount;
+}
+
+void CovidSonificationApp::StopNote() {
+  if (instrument_) {
+    instrument_->noteOff(0.5);
+  } else if (generator_) {
+    generator_gain_->getParam()->applyRamp(0, 0.2f);
+  }
 }
 
 }  // namespace covidsonifapp
