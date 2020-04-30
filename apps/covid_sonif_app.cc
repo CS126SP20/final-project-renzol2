@@ -59,6 +59,26 @@ const std::vector<std::string> kDatasetNames = {
     "none", "New cases", "Total cases"
 };
 
+const std::vector<std::string> kScaleNames = {
+    "Major", "Minor", "Pentatonic", "Whole tone", "Chromatic"
+};
+
+const std::vector<float> kMajorScale = {0, 2, 4, 5, 7, 9, 11};
+const std::vector<float> kMinorScale = {0, 2, 3, 5, 7, 8, 10};
+const std::vector<float> kPentatonicScale = {0, 2, 4, 7, 9};
+const std::vector<float> kWholeToneScale = {0, 2, 4, 6, 8, 10};
+const std::vector<float> kChromaticScale = {0, 1, 2, 3, 4,  5,
+                                            6, 7, 8, 9, 10, 11};
+
+
+const std::vector<covidsonifapp::CovidSonificationApp::Scale> kScales = {
+    {kScaleNames.at(0), kMajorScale,      kMajorScale.size()},
+    {kScaleNames.at(1), kMinorScale,      kMinorScale.size()},
+    {kScaleNames.at(2), kPentatonicScale, kPentatonicScale.size()},
+    {kScaleNames.at(3), kWholeToneScale,  kWholeToneScale.size()},
+    {kScaleNames.at(4), kChromaticScale,  kChromaticScale.size()}
+};
+
 using cinder::app::KeyEvent;
 
 /*
@@ -83,6 +103,7 @@ void CovidSonificationApp::setup() {
   HandleInstrumentsSelected();
   HandleEffectSelected();
   HandleDataSelected();
+  HandleScaleSelected();
   ctx->enable();
 
   PrintAudioGraph();
@@ -124,6 +145,7 @@ void CovidSonificationApp::SetupParams() {
   SetupInstruments();
   SetupGenerators();
   SetupEffects();
+  SetupScale();
   SetupMaxMidiPitchParam();
   SetupMinMidiPitchParam();
   SetupData();  // region handled only if data is selected
@@ -195,13 +217,8 @@ void CovidSonificationApp::MakeNoteFromAmount(const int amount,
  * @return quantized pitch in C minor scale
  */
 float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
-  // Define the minor scale
-  const size_t scale_length = 7;
-  float scale[scale_length] = {0, 2, 3, 5, 7, 8, 10 };
-
-  // Get the MIDI pitch
-  // More precisely: creates a mapping from height of mouse on screen to
-  //  MIDI pitch, and finds the converted value of the pos.y of mouse
+  // Creates a mapping from height of mouse on screen to MIDI pitch,
+  //   and finds the converted value of the pos.y of mouse
   // This is VERY helpful (see usage in QuantizePitchFromAmount)
   int pitch_midi = std::lroundf(cinder::lmap(
       pos.y,  // value to map
@@ -212,12 +229,12 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
 
   bool quantized = false;
 
-  // Decrease the scale degree of the note until it matches with a diatonic
-  // note in the minor key
+  // Decrease the scale degree of the note until it matches
+  // with a diatonic note in the selected key
   while (!quantized) {
     int note = pitch_midi % kNumPitchClasses;
-    for (size_t i = 0; i < scale_length; i++) {
-      if (note == scale[i]) {
+    for (size_t i = 0; i < current_scale_.scale_length; i++) {
+      if (note == current_scale_.scale_degrees.at(i)) {
         quantized = true;
         break;
       }
@@ -232,11 +249,6 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
 
 float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
                                                     const int max_amount) {
-  // TODO: let the person choose scale
-  // Define some scale: minor for now
-  const size_t scale_length = 7;
-  float scale[scale_length] = { 0, 2, 3, 5, 7, 8, 10 };
-
   // Creates a mapping from [0, highest amount in data]
   //                     to [min MIDI pitch, max MIDI pitch]
   // Then finds the mapping of the specific data point to a specific MIDI pitch
@@ -249,18 +261,19 @@ float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
 
   bool quantized = false;
 
-  // Decrease the scale degree of the note until it matches with a diatonic
-  // note in the minor key
+  // Decrease the scale degree of the note until it matches
+  // with a diatonic note in the selected key
   while (!quantized) {
     int note = pitch_midi % kNumPitchClasses;
-    for (size_t i = 0; i < scale_length; i++) {
-      if (note == scale[i]) {
+    for (size_t i = 0; i < current_scale_.scale_length; i++) {
+      if (note == current_scale_.scale_degrees.at(i)) {
         quantized = true;
         break;
       }
     }
-    if (!quantized)
+    if (!quantized) {
       pitch_midi--;
+    }
   }
 
   return cinder::audio::midiToFreq((float)pitch_midi);
@@ -451,7 +464,7 @@ void CovidSonificationApp::HandleDataSelected() {
   current_data_.Reset();
 
   // Find the name of the specific dataset
-  std::string name = kDatasetNames.at(dataset_selection_);
+  const std::string name = kDatasetNames.at(dataset_selection_);
   CI_LOG_I("Selecting data: '" << name << "'");
 
   if (name == "none") {
@@ -479,9 +492,19 @@ void CovidSonificationApp::HandleDataSelected() {
 
 void CovidSonificationApp::HandleRegionSelected() {
   current_region_ = current_data_.GetRegionDataByName(
-      region_names_.at(region_selection)
+      region_names_.at(region_selection_)
       );
 }
+
+void CovidSonificationApp::HandleScaleSelected() {
+  for (const Scale& scale : kScales) {
+    if (kScaleNames.at(scale_selection_) == scale.scale_name) {
+      current_scale_ = scale;
+      break;
+    }
+  }
+}
+
 
 /*
  * Private methods
@@ -587,7 +610,7 @@ void CovidSonificationApp::SetupRegions() {
   // Data must be populated for regions to be setup
   if (current_data_.Empty()) return;
 
-  params_->addParam("Region", region_names_, (int*)&region_selection)
+  params_->addParam("Region", region_names_, (int*)&region_selection_)
       .keyDecr("g")
       .keyIncr("h")
       .updateFn([this] {
@@ -637,6 +660,13 @@ void CovidSonificationApp::SetMinPitch(size_t new_pitch) {
     min_midi_pitch_ = new_pitch;
 }
 
+void CovidSonificationApp::SetupScale() {
+  params_->addParam("Scale", kScaleNames, (int*)&scale_selection_)
+      .updateFn([this] {
+        HandleScaleSelected();
+        PrintAudioGraph();
+      });
+}
 
 void CovidSonificationApp::SonifyData() {
   if (dataset_selection_ == 0) return;
@@ -705,5 +735,6 @@ void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Region");
   params_->removeParam("Sonify!");
 }
+
 
 }  // namespace covidsonifapp

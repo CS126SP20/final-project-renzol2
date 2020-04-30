@@ -28,6 +28,12 @@ namespace covidsonifapp {
  */
 class CovidSonificationApp : public cinder::app::App {
  public:
+  struct Scale {  // put this somewhere else...
+    std::string scale_name;
+    std::vector<float> scale_degrees;
+    size_t scale_length;
+  };
+
   CovidSonificationApp();
   void setup() override;
   void update() override;
@@ -49,6 +55,7 @@ class CovidSonificationApp : public cinder::app::App {
   bool HandleInstrumentSpecificNote(const cinder::vec2 &pos);
   void HandleDataSelected();
   void HandleRegionSelected();
+  void HandleScaleSelected();
   void SonifyData();
   static void PrintAudioGraph();
 
@@ -63,6 +70,7 @@ class CovidSonificationApp : public cinder::app::App {
   void SetMaxPitch(size_t new_pitch);
   void SetupMinMidiPitchParam();
   void SetMinPitch(size_t new_pitch);
+  void SetupScale();
   void RemoveDataSonificationParams();
 
   static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
@@ -76,6 +84,7 @@ class CovidSonificationApp : public cinder::app::App {
   cistk::InstrumentNodeRef instrument_;
   cistk::GeneratorNodeRef generator_;
   cistk::EffectNodeRef effect_;
+  Scale current_scale_;
   coviddata::DataSet current_data_;
   coviddata::RegionData current_region_;
 
@@ -96,7 +105,8 @@ class CovidSonificationApp : public cinder::app::App {
   size_t generator_enum_selection_ = 0;
   size_t effect_enum_selection = 7;
   size_t dataset_selection_ = 0;
-  size_t region_selection = 0;
+  size_t region_selection_ = 0;
+  size_t scale_selection_ = 0;
 
   float last_freq_ = 0;
 };
