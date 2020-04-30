@@ -19,21 +19,18 @@ namespace covidsonifapp {
 const int kParamsWindowWidth = 300;
 const int kParamsWindowHeight = 700;
 
-// 21 and 108 are the lowest/highest keys on the piano keyboard, respectively
-const float kMaxPitchMidi = 100;  // originally 80
-const float kMinPitchMidi = 30;   // originally 40
+const float kAbsoluteMaxPitchMidi = 127;
+const float kAbsoluteMinPitchMidi = 0;
+const std::string kMaxPitchParamName = "Max pitch (MIDI)";
+const std::string kMinPitchParamName = "Min pitch (MIDI)";
 
 const size_t kNumPitchClasses = 12;
 
-const std::vector<std::string> kDataFileNames = {
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)"
-};
 
 using cinder::app::KeyEvent;
 
 /*
- * Overriden Cinder App Methods
+ * Overridden Cinder App Methods
  */
 
 CovidSonificationApp::CovidSonificationApp() = default;
@@ -95,6 +92,8 @@ void CovidSonificationApp::SetupParams() {
   SetupInstruments();
   SetupGenerators();
   SetupEffects();
+  SetupMaxMidiPitchParam();
+  SetupMinMidiPitchParam();
   SetupData();  // region handled only if data is selected
 }
 
@@ -137,8 +136,7 @@ void CovidSonificationApp::MakeNoteFromAmount(const int amount,
   float freq = QuantizePitchFromAmount(amount, max_amount);
   if (std::fabs(last_freq_ - freq) < 0.01f) return;
 
-  // Calculate gain (set to 100% for now)
-  float gain = 0.85f;
+  float gain = master_gain_->getValue();
 
   // TODO: identical to other MakeNote, break into own function
   // Set frequency and gain to instrument/generator accordingly
@@ -172,9 +170,13 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
   // Get the MIDI pitch
   // More precisely: creates a mapping from height of mouse on screen to
   //  MIDI pitch, and finds the converted value of the pos.y of mouse
-  // This is VERY helpful.
+  // This is VERY helpful (see usage in QuantizePitchFromAmount)
   int pitch_midi = std::lroundf(cinder::lmap(
-      pos.y, (float)getWindowHeight(), 0.0f, kMinPitchMidi, kMaxPitchMidi));
+      pos.y,  // value to map
+      (float)getWindowHeight(),
+      0.0f,
+      (float)min_midi_pitch_,
+      (float)max_midi_pitch_));
 
   bool quantized = false;
 
@@ -207,7 +209,11 @@ float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
   //                     to [min MIDI pitch, max MIDI pitch]
   // Then finds the mapping of the specific data point to a specific MIDI pitch
   int pitch_midi = std::lroundf(cinder::lmap(
-      (float)amount, 0.0f, (float)max_amount, kMinPitchMidi, kMaxPitchMidi));
+      (float)amount,
+      0.0f,
+      (float)max_amount,
+      (float)min_midi_pitch_,
+      (float)max_midi_pitch_));
 
   bool quantized = false;
 
@@ -417,11 +423,9 @@ void CovidSonificationApp::HandleDataSelected() {
   CI_LOG_I("Selecting data: '" << name << "'");
 
   if (name == "none") {
-    params_->removeParam("Region");
-    params_->removeParam("Sonify!");
+    RemoveDataSonificationParams();
   } else {
-    // Removing the "Sonify!" button ensures that it appears last in list
-    params_->removeParam("Sonify!");
+    RemoveDataSonificationParams();
 
     for (size_t i = 1; i < dataset_names_.size(); i++) {
       if (name == dataset_names_.at(i)) {
@@ -583,6 +587,46 @@ void CovidSonificationApp::SetupRegions() {
   params_->addButton("Sonify!", [this] { SonifyData(); });
 }
 
+void CovidSonificationApp::SetupMaxMidiPitchParam() {
+  params_
+      ->addParam<size_t>(
+          kMaxPitchParamName,  // sets name
+          [this] (size_t value) { SetMaxPitch(value); },
+          [this] { return max_midi_pitch_; })
+      .min(kAbsoluteMinPitchMidi)
+      .max(kAbsoluteMaxPitchMidi)
+      .step(1);
+}
+
+void CovidSonificationApp::SetMaxPitch(size_t new_pitch) {
+  bool valid_midi_num =
+      new_pitch >= kAbsoluteMinPitchMidi && new_pitch <= kAbsoluteMaxPitchMidi;
+
+  if (valid_midi_num && new_pitch >= min_midi_pitch_)
+    max_midi_pitch_ = new_pitch;
+}
+
+
+void CovidSonificationApp::SetupMinMidiPitchParam() {
+  params_
+      ->addParam<size_t>(
+          kMinPitchParamName,  // sets name
+          [this] (size_t value) { SetMinPitch(value); },
+          [this] { return min_midi_pitch_; })
+      .min(kAbsoluteMinPitchMidi)
+      .max(kAbsoluteMaxPitchMidi)
+      .step(1);
+}
+
+void CovidSonificationApp::SetMinPitch(size_t new_pitch) {
+  bool valid_midi_num =
+      new_pitch >= kAbsoluteMinPitchMidi && new_pitch <= kAbsoluteMaxPitchMidi;
+
+  if (valid_midi_num && new_pitch <= max_midi_pitch_)
+    min_midi_pitch_ = new_pitch;
+}
+
+
 void CovidSonificationApp::SonifyData() {
   if (dataset_selection_ == 0) return;
 
@@ -644,6 +688,11 @@ void CovidSonificationApp::StopNote() {
   } else if (generator_) {
     generator_gain_->getParam()->applyRamp(0, 0.2f);
   }
+}
+
+void CovidSonificationApp::RemoveDataSonificationParams() {
+  params_->removeParam("Region");
+  params_->removeParam("Sonify!");
 }
 
 }  // namespace covidsonifapp

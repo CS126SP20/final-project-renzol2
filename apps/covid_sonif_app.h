@@ -60,6 +60,12 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupEffects();
   void SetupData();
   void SetupRegions();
+  void SetupMaxMidiPitchParam();
+  void SetMaxPitch(size_t new_pitch);
+  void SetupMinMidiPitchParam();
+  void SetMinPitch(size_t new_pitch);
+  void RemoveDataSonificationParams();
+
   static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
   static int GetHighestAmountInData(const coviddata::DataSet &ds,
                                     bool include_world);
@@ -84,9 +90,18 @@ class CovidSonificationApp : public cinder::app::App {
   // Containers for COVID-19 Data
   std::vector<std::string> dataset_names_;
   std::vector<std::string> region_names_;
+  const std::vector<std::string> kDataFileNames = {
+      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
+      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)"
+  };
 
   // Instance variables for COVID-19 Data
   int max_amount_ = 0;
+
+  // Instance variables for sonification parameters
+  // 21 and 108 are the lowest/highest keys on the piano keyboard, respectively
+  size_t max_midi_pitch_ = 108;
+  size_t min_midi_pitch_ = 21;
 
   size_t instrument_enum_selection_ = 13;
   size_t generator_enum_selection_ = 0;
