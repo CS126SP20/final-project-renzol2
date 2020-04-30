@@ -21,11 +21,10 @@
 namespace covidsonifapp {
 
 /*
- * Test application using source code from the StkTestApp:
- * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
+ * Application that sonifies COVID-19 Data
  *
- * Meant as an initial means of testing the Stk-Cinder library.
- * Integration with COVID-19 data will follow after testing succeeds.
+ * Audio synthesis using source code from the StkTestApp:
+ * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
  */
 class CovidSonificationApp : public cinder::app::App {
  public:
@@ -83,19 +82,9 @@ class CovidSonificationApp : public cinder::app::App {
   ci::audio::GainNodeRef generator_gain_;
 
   cinder::params::InterfaceGlRef params_;
-  std::vector<std::string> instrument_names_;
-  std::vector<std::string> generator_names_;
-  std::vector<std::string> effect_names_;
-
-  // Containers for COVID-19 Data
-  std::vector<std::string> dataset_names_;
-  std::vector<std::string> region_names_;
-  const std::vector<std::string> kDataFileNames = {
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)"
-  };
 
   // Instance variables for COVID-19 Data
+  std::vector<std::string> region_names_;
   int max_amount_ = 0;
 
   // Instance variables for sonification parameters

@@ -7,12 +7,18 @@
 #include <thread>
 
 /*
- * All source code taken from StkTestApp:
+ * Most source code taken from StkTestApp:
  * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
  *
- * This code is meant as a means to test the Cinder-Stk library.
- * By writing it out myself, I hope to gain some insight into how the library
- * works and how I can use it for my own project.
+ * Original "StkTestApp" allows user to play any of the STK included
+ * instruments/generators/effects using the mouse.
+ *
+ * This modified version builds on top of it, reading .csv files containing
+ * COVID-19 data and "sonifying" it.
+ *
+ * The application provides additional parameters for the user to choose what
+ * data to sonify, as well as extra music-related parameters that the original
+ * application set as static features.
  */
 namespace covidsonifapp {
 
@@ -21,11 +27,37 @@ const int kParamsWindowHeight = 700;
 
 const float kAbsoluteMaxPitchMidi = 127;
 const float kAbsoluteMinPitchMidi = 0;
-const std::string kMaxPitchParamName = "Max pitch (MIDI)";
-const std::string kMinPitchParamName = "Min pitch (MIDI)";
 
 const size_t kNumPitchClasses = 12;
 
+const std::string kMaxPitchParamName = "Max pitch (MIDI)";
+const std::string kMinPitchParamName = "Min pitch (MIDI)";
+
+const std::vector<std::string> kInstrumentNames = {
+    "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
+    "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
+    "Moog",     "Plucked",  "Resonate", "Saxofony", "Shakers",  "Simple",
+    "Sitar",    "StifKarp", "VoicForm", "Whistle",  "BeeThree", "FMVoices",
+    "HevyMetl", "PercFlut", "Rhodey",   "TubeBell", "Wurley"
+};
+
+const std::vector<std::string> kGeneratorNames = {
+    "none", "Blit", "Granulate"
+};
+
+const std::vector<std::string> kEffectNames = {
+    "none", "Echo", "Chorus", "PitShift", "LentPitShift",
+    "PRCRev", "JCRev", "NRev", "FreeVerb"
+};
+
+const std::vector<std::string> kDataFileNames = {
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)"
+};
+
+const std::vector<std::string> kDatasetNames = {
+    "none", "New cases", "Total cases"
+};
 
 using cinder::app::KeyEvent;
 
@@ -244,7 +276,7 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
   generator_gain_->setValue(0);
 
   // Get the name of selected instrument and notify user
-  std::string name = instrument_names_.at(instrument_enum_selection_);
+  const std::string& name = kInstrumentNames.at(instrument_enum_selection_);
   CI_LOG_I("Selecting instrument '" << name << "'" );
 
   // Set instrument accordingly
@@ -337,7 +369,7 @@ void CovidSonificationApp::HandleGeneratorSelected() {
   instrument_enum_selection_ = 0;  // set to "none"
 
   // Fetch the name of the generator
-  std::string name = generator_names_.at(generator_enum_selection_);
+  const std::string name = kGeneratorNames.at(generator_enum_selection_);
   CI_LOG_I("Selecting generator '" << name << "'");
 
   // Assign the generator based on its name
@@ -370,7 +402,7 @@ void CovidSonificationApp::HandleEffectSelected() {
     effect_->disconnectAll();
 
   // Find the name of the specific effect
-  std::string name = effect_names_.at(effect_enum_selection);
+  std::string name = kEffectNames.at(effect_enum_selection);
   CI_LOG_I("Selecting effect '" << name << "'");
 
   auto ctx = cinder::audio::master();
@@ -419,7 +451,7 @@ void CovidSonificationApp::HandleDataSelected() {
   current_data_.Reset();
 
   // Find the name of the specific dataset
-  std::string name = dataset_names_.at(dataset_selection_);
+  std::string name = kDatasetNames.at(dataset_selection_);
   CI_LOG_I("Selecting data: '" << name << "'");
 
   if (name == "none") {
@@ -427,8 +459,8 @@ void CovidSonificationApp::HandleDataSelected() {
   } else {
     RemoveDataSonificationParams();
 
-    for (size_t i = 1; i < dataset_names_.size(); i++) {
-      if (name == dataset_names_.at(i)) {
+    for (size_t i = 1; i < kDatasetNames.size(); i++) {
+      if (name == kDatasetNames.at(i)) {
         // Indices are offset by 1 because dataset names must
         // include "none" at the beginning.
         const std::string& filename = kDataFileNames.at(i - 1);
@@ -504,17 +536,9 @@ void CovidSonificationApp::SetupMasterGain() {
 }
 
 void CovidSonificationApp::SetupInstruments() {
-  // Define instrument names
-  instrument_names_ = {
-      "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
-      "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
-      "Moog",     "Plucked",  "Resonate", "Saxofony", "Shakers",  "Simple",
-      "Sitar",    "StifKarp", "VoicForm", "Whistle",  "BeeThree", "FMVoices",
-      "HevyMetl", "PercFlut", "Rhodey",   "TubeBell", "Wurley"};
-
   // Set instruments as a parameter
   params_
-      ->addParam("Instrument", instrument_names_,
+      ->addParam("Instrument", kInstrumentNames,
                  (int*)&instrument_enum_selection_)  // double check this line
       .keyDecr("[")
       .keyIncr("]")
@@ -525,14 +549,9 @@ void CovidSonificationApp::SetupInstruments() {
 }
 
 void CovidSonificationApp::SetupGenerators() {
-  // Define generator names
-  generator_names_ = {
-      "none", "Blit", "Granulate"
-  };
-
   // Set generator as a parameter
   params_
-      ->addParam("Generator", generator_names_,
+      ->addParam("Generator", kGeneratorNames,
                  (int*)&generator_enum_selection_)
       .keyDecr("u")
       .keyIncr("i")
@@ -543,14 +562,8 @@ void CovidSonificationApp::SetupGenerators() {
 }
 
 void CovidSonificationApp::SetupEffects() {
-  // Define effects names
-  effect_names_ = {
-      "none", "Echo", "Chorus", "PitShift", "LentPitShift",
-      "PRCRev", "JCRev", "NRev", "FreeVerb"
-  };
-
   // Add effects as parameter
-  params_->addParam("Effect", effect_names_, (int*)&effect_enum_selection)
+  params_->addParam("Effect", kEffectNames, (int*)&effect_enum_selection)
       .keyDecr("o")
       .keyIncr("p")
       .updateFn([this] {
@@ -560,9 +573,7 @@ void CovidSonificationApp::SetupEffects() {
 }
 
 void CovidSonificationApp::SetupData() {
-  dataset_names_ = {"none", "New cases", "Total cases"};
-
-  params_->addParam("Data", dataset_names_, (int*)&dataset_selection_)
+  params_->addParam("Data", kDatasetNames, (int*)&dataset_selection_)
       .keyDecr("t")
       .keyIncr("y")
       .updateFn([this] {
