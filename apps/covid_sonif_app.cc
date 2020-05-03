@@ -22,13 +22,20 @@
  */
 namespace covidsonifapp {
 
-const int kParamsWindowWidth = 300;
+const int kParamsWindowWidth = 400;
 const int kParamsWindowHeight = 700;
 
 const float kAbsoluteMaxPitchMidi = 127;
 const float kAbsoluteMinPitchMidi = 0;
 
+const size_t kMinBpm = 0;
+const size_t kMaxBpm = 999;
+
+const float kInitialGain = 0.5f;
+
 const size_t kNumPitchClasses = 12;
+
+const char kNormalFont[] = "Helvetica";
 
 const std::string kMaxPitchParamName = "Max pitch (MIDI)";
 const std::string kMinPitchParamName = "Min pitch (MIDI)";
@@ -52,11 +59,13 @@ const std::vector<std::string> kEffectNames = {
 
 const std::vector<std::string> kDataFileNames = {
     R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)"
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_deaths.csv)",
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)",
+    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_deaths.csv)"
 };
 
 const std::vector<std::string> kDatasetNames = {
-    "none", "New cases", "Total cases"
+    "none", "New cases", "New deaths", "Total cases", "Total deaths"
 };
 
 const std::vector<std::string> kScaleNames = {
@@ -93,7 +102,7 @@ void CovidSonificationApp::setup() {
   stk::Stk::setSampleRate(ctx->getSampleRate());
   cistk::initRawwavePath();
 
-  master_gain_ = ctx->makeNode<cinder::audio::GainNode>(0.85f);
+  master_gain_ = ctx->makeNode<cinder::audio::GainNode>(kInitialGain);
   master_gain_ >> ctx->getOutput();
 
   // Mapping generator gain to mouse y value
@@ -113,6 +122,7 @@ void CovidSonificationApp::update() { }
 
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
+  DisplayTitle();
   params_->draw();
 }
 
@@ -148,7 +158,7 @@ void CovidSonificationApp::SetupParams() {
   SetupScale();
   SetupMaxMidiPitchParam();
   SetupMinMidiPitchParam();
-  SetupData();  // region handled only if data is selected
+  SetupData();  // data-specific parameters handled only if data is selected
 }
 
 void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
@@ -382,7 +392,7 @@ void CovidSonificationApp::HandleGeneratorSelected() {
   instrument_enum_selection_ = 0;  // set to "none"
 
   // Fetch the name of the generator
-  const std::string name = kGeneratorNames.at(generator_enum_selection_);
+  const std::string& name = kGeneratorNames.at(generator_enum_selection_);
   CI_LOG_I("Selecting generator '" << name << "'");
 
   // Assign the generator based on its name
@@ -415,7 +425,7 @@ void CovidSonificationApp::HandleEffectSelected() {
     effect_->disconnectAll();
 
   // Find the name of the specific effect
-  std::string name = kEffectNames.at(effect_enum_selection);
+  const std::string& name = kEffectNames.at(effect_enum_selection);
   CI_LOG_I("Selecting effect '" << name << "'");
 
   auto ctx = cinder::audio::master();
@@ -464,14 +474,13 @@ void CovidSonificationApp::HandleDataSelected() {
   current_data_.Reset();
 
   // Find the name of the specific dataset
-  const std::string name = kDatasetNames.at(dataset_selection_);
+  const std::string& name = kDatasetNames.at(dataset_selection_);
   CI_LOG_I("Selecting data: '" << name << "'");
 
-  if (name == "none") {
-    RemoveDataSonificationParams();
-  } else {
-    RemoveDataSonificationParams();
+  // Removing all params ensures that they maintain their order
+  RemoveDataSonificationParams();
 
+  if (name != "none") {
     for (size_t i = 1; i < kDatasetNames.size(); i++) {
       if (name == kDatasetNames.at(i)) {
         // Indices are offset by 1 because dataset names must
@@ -480,7 +489,7 @@ void CovidSonificationApp::HandleDataSelected() {
 
         current_data_.ImportData(filename);
         region_names_ = current_data_.GetRegions();
-        SetupRegions();
+        SetupDataSonificationParams();
 
         max_amount_ = GetHighestAmountInData(current_data_, false);
 
@@ -617,7 +626,9 @@ void CovidSonificationApp::SetupRegions() {
         HandleRegionSelected();
         PrintAudioGraph();
       });
+}
 
+void CovidSonificationApp::SetupSonifyButton() {
   params_->addButton("Sonify!", [this] { SonifyData(); });
 }
 
@@ -668,23 +679,46 @@ void CovidSonificationApp::SetupScale() {
       });
 }
 
+void CovidSonificationApp::SetupBpm() {
+  params_
+      ->addParam<int>(
+          "BPM",
+          [this] (int value) { AssignBpm(value); },
+          [this] { return bpm_; })
+      .min(kMinBpm)
+      .max(kMaxBpm)
+      .step(1);
+}
+
+void CovidSonificationApp::AssignBpm(size_t set_bpm) {
+  if (set_bpm >= kMinBpm && set_bpm <= kMaxBpm) bpm_ = set_bpm;
+}
+
+void CovidSonificationApp::SetupDataSonificationParams() {
+  SetupRegions();
+  SetupBpm();
+  SetupSonifyButton();
+}
+
 void CovidSonificationApp::SonifyData() {
   if (dataset_selection_ == 0) return;
 
-  // The max data point only includes the world data if the user wishes to hear
-  // the world data sonified.
+  // The max data point only includes the world data if the
+  // user wishes to hear the world data sonified.
   // Reason: because world data is the SUM of all other regions' data,
   //  any differences in other regions' data are barely heard.
   max_amount_ = GetHighestAmountInData(
       current_data_, current_region_.GetRegionName() == "World");
   // Equivalent to "zooming in" the scale of a graph
 
+  int ms = ConvertBpmToMilliseconds(bpm_);
+  std::chrono::milliseconds interval(ms);
+
   for (const std::string& date : current_region_.GetDates()) {
     MakeNoteFromAmount(current_region_.GetAmountAtDate(date), max_amount_);
 
     // Pause for some time
-    // TODO: let user choose BPM
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(interval);
 
     // TODO: later: visualize
     // visualization code will go here lol (or that may be handled by MakeNote)
@@ -733,7 +767,44 @@ void CovidSonificationApp::StopNote() {
 
 void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Region");
+  params_->removeParam("BPM");
   params_->removeParam("Sonify!");
+}
+
+// Taken directly from the CS 126 Snake Project
+void CovidSonificationApp::ShowText(const std::string& text,
+                                    const cinder::Color& color,
+                                    const glm::ivec2& size,
+                                    const glm::vec2& loc) {
+  cinder::gl::color(color);
+
+  auto box = cinder::TextBox()
+      .alignment(cinder::TextBox::CENTER)
+      .font(cinder::Font(kNormalFont, 30))
+      .size(size)
+      .color(color)
+      .backgroundColor(cinder::ColorA(0, 0, 0, 0))
+      .text(text);
+
+  const auto box_size = box.getSize();
+  const cinder::vec2 locp = {loc.x - box_size.x / 2, loc.y - box_size.y / 2};
+  const auto surface = box.render();
+  const auto texture = cinder::gl::Texture::create(surface);
+  cinder::gl::draw(texture, locp);
+}
+
+void CovidSonificationApp::DisplayTitle() {
+  const cinder::vec2 center = getWindowCenter();
+  const cinder::ivec2 size = {500, 50};
+  const cinder::Color color = cinder::Color::white();
+
+  ShowText("This is what COVID-19 sounds like.", color, size, center);
+}
+
+int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {
+  const int seconds_per_minute = 60;
+  const int ms_per_second = 1000;
+  return (seconds_per_minute * ms_per_second) / bpm;
 }
 
 

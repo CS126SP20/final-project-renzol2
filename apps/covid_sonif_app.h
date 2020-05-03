@@ -58,6 +58,7 @@ class CovidSonificationApp : public cinder::app::App {
   void HandleScaleSelected();
   void SonifyData();
   static void PrintAudioGraph();
+  void DisplayTitle();
 
  private:
   void SetupMasterGain();
@@ -71,11 +72,17 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupMinMidiPitchParam();
   void SetMinPitch(size_t new_pitch);
   void SetupScale();
+  void SetupBpm();
+  void SetupSonifyButton();
+  void AssignBpm(size_t set_bpm);
+  void SetupDataSonificationParams();
   void RemoveDataSonificationParams();
-
+  void ShowText(const std::string& text, const cinder::Color& color,
+                const cinder::ivec2& size, const cinder::vec2& loc);
   static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
   static int GetHighestAmountInData(const coviddata::DataSet &ds,
                                     bool include_world);
+  static int ConvertBpmToMilliseconds(int bpm);
 
  private:
   ci::audio::GainNodeRef master_gain_;
@@ -100,6 +107,8 @@ class CovidSonificationApp : public cinder::app::App {
   // 21 and 108 are the lowest/highest keys on the piano keyboard, respectively
   size_t max_midi_pitch_ = 108;
   size_t min_midi_pitch_ = 21;
+  int bpm_ = 240;
+
 
   size_t instrument_enum_selection_ = 13;
   size_t generator_enum_selection_ = 0;
