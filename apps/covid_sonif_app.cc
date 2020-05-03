@@ -6,6 +6,7 @@
 #include <chrono>
 #include <thread>
 
+
 /*
  * Most source code taken from StkTestApp:
  * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
@@ -37,56 +38,6 @@ const size_t kNumPitchClasses = 12;
 
 const char kNormalFont[] = "Helvetica";
 
-const std::string kMaxPitchParamName = "Max pitch (MIDI)";
-const std::string kMinPitchParamName = "Min pitch (MIDI)";
-
-const std::vector<std::string> kInstrumentNames = {
-    "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
-    "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
-    "Moog",     "Plucked",  "Resonate", "Saxofony", "Shakers",  "Simple",
-    "Sitar",    "StifKarp", "VoicForm", "Whistle",  "BeeThree", "FMVoices",
-    "HevyMetl", "PercFlut", "Rhodey",   "TubeBell", "Wurley"
-};
-
-const std::vector<std::string> kGeneratorNames = {
-    "none", "Blit", "Granulate"
-};
-
-const std::vector<std::string> kEffectNames = {
-    "none", "Echo", "Chorus", "PitShift", "LentPitShift",
-    "PRCRev", "JCRev", "NRev", "FreeVerb"
-};
-
-const std::vector<std::string> kDataFileNames = {
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_deaths.csv)",
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)",
-    R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_deaths.csv)"
-};
-
-const std::vector<std::string> kDatasetNames = {
-    "none", "New cases", "New deaths", "Total cases", "Total deaths"
-};
-
-const std::vector<std::string> kScaleNames = {
-    "Major", "Minor", "Pentatonic", "Whole tone", "Chromatic"
-};
-
-const std::vector<float> kMajorScale = {0, 2, 4, 5, 7, 9, 11};
-const std::vector<float> kMinorScale = {0, 2, 3, 5, 7, 8, 10};
-const std::vector<float> kPentatonicScale = {0, 2, 4, 7, 9};
-const std::vector<float> kWholeToneScale = {0, 2, 4, 6, 8, 10};
-const std::vector<float> kChromaticScale = {0, 1, 2, 3, 4,  5,
-                                            6, 7, 8, 9, 10, 11};
-
-
-const std::vector<covidsonifapp::CovidSonificationApp::Scale> kScales = {
-    {kScaleNames.at(0), kMajorScale,      kMajorScale.size()},
-    {kScaleNames.at(1), kMinorScale,      kMinorScale.size()},
-    {kScaleNames.at(2), kPentatonicScale, kPentatonicScale.size()},
-    {kScaleNames.at(3), kWholeToneScale,  kWholeToneScale.size()},
-    {kScaleNames.at(4), kChromaticScale,  kChromaticScale.size()}
-};
 
 using cinder::app::KeyEvent;
 

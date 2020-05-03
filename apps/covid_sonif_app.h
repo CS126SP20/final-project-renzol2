@@ -27,13 +27,10 @@ namespace covidsonifapp {
  * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
  */
 class CovidSonificationApp : public cinder::app::App {
+ /*
+  * Constructor and Cinder Application Overriden functions
+  */
  public:
-  struct Scale {  // put this somewhere else...
-    std::string scale_name;
-    std::vector<float> scale_degrees;
-    size_t scale_length;
-  };
-
   CovidSonificationApp();
   void setup() override;
   void update() override;
@@ -42,6 +39,9 @@ class CovidSonificationApp : public cinder::app::App {
   void mouseDrag(cinder::app::MouseEvent event) override;
   void mouseUp(cinder::app::MouseEvent event) override;
 
+ /*
+  * Public functions
+  */
  public:
   void SetupParams();
   void MakeNote(const cinder::vec2 &pos);
@@ -60,6 +60,9 @@ class CovidSonificationApp : public cinder::app::App {
   static void PrintAudioGraph();
   void DisplayTitle();
 
+ /*
+  * Private helper functions
+  */
  private:
   void SetupMasterGain();
   void SetupInstruments();
@@ -84,6 +87,19 @@ class CovidSonificationApp : public cinder::app::App {
                                     bool include_world);
   static int ConvertBpmToMilliseconds(int bpm);
 
+ /*
+  * Internal structure class for scales
+  */
+ private:
+  struct Scale {
+    std::string scale_name;
+    std::vector<float> scale_degrees;
+    size_t scale_length;
+  };
+
+ /*
+  * Instance variables
+  */
  private:
   ci::audio::GainNodeRef master_gain_;
 
@@ -104,12 +120,11 @@ class CovidSonificationApp : public cinder::app::App {
   int max_amount_ = 0;
 
   // Instance variables for sonification parameters
-  // 21 and 108 are the lowest/highest keys on the piano keyboard, respectively
-  size_t max_midi_pitch_ = 108;
-  size_t min_midi_pitch_ = 21;
+  size_t max_midi_pitch_ = 48;  // C4
+  size_t min_midi_pitch_ = 96;  // C8
   int bpm_ = 240;
 
-
+  // Current selection of parameters for OpenGL params
   size_t instrument_enum_selection_ = 13;
   size_t generator_enum_selection_ = 0;
   size_t effect_enum_selection = 7;
@@ -118,6 +133,65 @@ class CovidSonificationApp : public cinder::app::App {
   size_t scale_selection_ = 0;
 
   float last_freq_ = 0;
+
+ /*
+  * Names for parameters
+  */
+ private:
+  const std::string kMaxPitchParamName = "Max pitch (MIDI)";
+  const std::string kMinPitchParamName = "Min pitch (MIDI)";
+
+  const std::vector<std::string> kInstrumentNames = {
+      "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
+      "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
+      "Moog",     "Plucked",  "Resonate", "Saxofony", "Shakers",  "Simple",
+      "Sitar",    "StifKarp", "VoicForm", "Whistle",  "BeeThree", "FMVoices",
+      "HevyMetl", "PercFlut", "Rhodey",   "TubeBell", "Wurley"
+  };
+
+  const std::vector<std::string> kGeneratorNames = {
+      "none", "Blit", "Granulate"
+  };
+
+  const std::vector<std::string> kEffectNames = {
+      "none", "Echo", "Chorus", "PitShift", "LentPitShift",
+      "PRCRev", "JCRev", "NRev", "FreeVerb"
+  };
+
+  const std::vector<std::string> kDataFileNames = {
+      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
+      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_deaths.csv)",
+      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)",
+      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_deaths.csv)"
+  };
+
+  const std::vector<std::string> kDatasetNames = {
+      "none", "New cases", "New deaths", "Total cases", "Total deaths"
+  };
+
+ /*
+  * Scale information
+  */
+ private:
+  const std::vector<std::string> kScaleNames = {
+      "Major", "Minor", "Pentatonic", "Whole tone", "Chromatic"
+  };
+
+  const std::vector<float> kMajorScale = {0, 2, 4, 5, 7, 9, 11};
+  const std::vector<float> kMinorScale = {0, 2, 3, 5, 7, 8, 10};
+  const std::vector<float> kPentatonicScale = {0, 2, 4, 7, 9};
+  const std::vector<float> kWholeToneScale = {0, 2, 4, 6, 8, 10};
+  const std::vector<float> kChromaticScale = {0, 1, 2, 3, 4,  5,
+                                              6, 7, 8, 9, 10, 11};
+
+
+  const std::vector<covidsonifapp::CovidSonificationApp::Scale> kScales = {
+      {kScaleNames.at(0), kMajorScale,      kMajorScale.size()},
+      {kScaleNames.at(1), kMinorScale,      kMinorScale.size()},
+      {kScaleNames.at(2), kPentatonicScale, kPentatonicScale.size()},
+      {kScaleNames.at(3), kWholeToneScale,  kWholeToneScale.size()},
+      {kScaleNames.at(4), kChromaticScale,  kChromaticScale.size()}
+  };
 };
 
 }  // namespace covidsonifapp
