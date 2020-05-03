@@ -92,12 +92,14 @@ void CovidSonificationApp::update() {
 
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
-  DisplayTitle();
+
+  if (!in_sonification_playback) DisplayDirections();
   DisplayPitch();
+  DisplayCurrentDataset();
+
   params_->draw();
 
   if (in_sonification_playback) {
-    DisplayCurrentDataset();
     DisplayCurrentNoteData();
   }
 }
@@ -133,6 +135,9 @@ void CovidSonificationApp::SetupParams() {
   SetupScale();
   SetupMaxMidiPitchParam();
   SetupMinMidiPitchParam();
+
+  params_->addSeparator();
+
   SetupData();  // data-specific parameters handled only if data is selected
 }
 
@@ -533,6 +538,9 @@ void CovidSonificationApp::AssignBpm(size_t set_bpm) {
 
 void CovidSonificationApp::SetupDataSonificationParams() {
   SetupRegions();
+
+  params_->addSeparator();
+
   SetupBpm();
   SetupSonifyButton();
 }
@@ -551,12 +559,16 @@ void CovidSonificationApp::SonifyData() {
   in_sonification_playback = true;
 }
 
-void CovidSonificationApp::DisplayTitle() {
+void CovidSonificationApp::DisplayDirections() {
+  const std::string directions =
+      "Select a dataset and press 'Sonify' to hear how it sounds.\n"
+      "Change the settings as desired.";
+
   const cinder::vec2 center = getWindowCenter();
-  const cinder::ivec2 size = {500, 50};
+  const cinder::ivec2 size = {500, 200};
   const cinder::Color color = cinder::Color::white();
 
-  ShowText("This is what COVID-19 sounds like.", color, size, center);
+  ShowText(directions, color, size, center);
 }
 
 void CovidSonificationApp::DisplayPitch() {
@@ -578,8 +590,10 @@ void CovidSonificationApp::DisplayCurrentDataset() {
   // No display necessary if no dataset is selected
   if (dataset_selection_ == 0) return;
 
+  std::string prefix = in_sonification_playback ? "Sonifying: " : "Selected : ";
+
   std::stringstream current_dataset_message;
-  current_dataset_message << "Sonifying "
+  current_dataset_message << prefix
                           << kDatasetNames.at(dataset_selection_) << " of "
                           << current_region_.GetRegionName();
   const cinder::ivec2 size = {700, 50};

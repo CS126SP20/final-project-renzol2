@@ -57,7 +57,7 @@ class CovidSonificationApp : public cinder::app::App {
   void HandleScaleSelected();
   void SonifyData();
   static void PrintAudioGraph();
-  void DisplayTitle();
+  void DisplayDirections();
   void DisplayPitch();
   void DisplayCurrentDataset();
   void DisplayCurrentNoteData();
