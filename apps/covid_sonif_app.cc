@@ -32,7 +32,7 @@ const float kAbsoluteMinPitchMidi = 0;
 const size_t kMinBpm = 0;
 const size_t kMaxBpm = 999;
 
-const float kInitialGain = 0.5f;
+const float kInitialGain = 0.6f;
 
 const size_t kNumPitchClasses = 12;
 
@@ -69,12 +69,39 @@ void CovidSonificationApp::setup() {
   PrintAudioGraph();
 }
 
-void CovidSonificationApp::update() { }
+void CovidSonificationApp::update() {
+  if (in_sonification_playback) {
+    // Break statement; stops when no more dates are in the dataset
+    if (current_date_index_ == current_region_.GetDates().size()) {
+      in_sonification_playback = false;
+      StopNote();
+      current_date_ = {};
+      current_amount_ = coviddata::kNullAmount;
+      return;
+    }
+
+    // Play note using data
+    current_date_ =
+        current_region_.GetDates().at(current_date_index_);
+    current_amount_ = current_region_.GetAmountAtDate(current_date_);
+    MakeNoteFromAmount(current_amount_, max_amount_);
+
+    // Pause thread using specified BPM
+    std::this_thread::sleep_for(interval);
+
+    current_date_index_++;
+  }
+}
 
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
   DisplayTitle();
   params_->draw();
+
+  if (in_sonification_playback) {
+    DisplayCurrentDataset();
+    DisplayCurrentNoteData();
+  }
 }
 
 void CovidSonificationApp::mouseDown(cinder::app::MouseEvent event) {
@@ -96,7 +123,7 @@ void CovidSonificationApp::mouseUp(cinder::app::MouseEvent event) {
 void CovidSonificationApp::SetupParams() {
   // Define parameters
   params_ = cinder::params::InterfaceGl::create(
-      getWindow(), "STK Params",
+      getWindow(), "Settings",
       cinder::app::toPixels(
           cinder::ivec2(kParamsWindowWidth, kParamsWindowHeight)));
 
@@ -441,6 +468,7 @@ void CovidSonificationApp::HandleDataSelected() {
         current_data_.ImportData(filename);
         region_names_ = current_data_.GetRegions();
         SetupDataSonificationParams();
+        HandleRegionSelected();
 
         max_amount_ = GetHighestAmountInData(current_data_, false);
 
@@ -580,7 +608,9 @@ void CovidSonificationApp::SetupRegions() {
 }
 
 void CovidSonificationApp::SetupSonifyButton() {
-  params_->addButton("Sonify!", [this] { SonifyData(); });
+  params_->addButton("Sonify!", [this] {
+    SonifyData();
+  });
 }
 
 void CovidSonificationApp::SetupMaxMidiPitchParam() {
@@ -654,28 +684,51 @@ void CovidSonificationApp::SetupDataSonificationParams() {
 void CovidSonificationApp::SonifyData() {
   if (dataset_selection_ == 0) return;
 
-  // The max data point only includes the world data if the
-  // user wishes to hear the world data sonified.
-  // Reason: because world data is the SUM of all other regions' data,
-  //  any differences in other regions' data are barely heard.
   max_amount_ = GetHighestAmountInData(
       current_data_, current_region_.GetRegionName() == "World");
-  // Equivalent to "zooming in" the scale of a graph
 
   int ms = ConvertBpmToMilliseconds(bpm_);
-  std::chrono::milliseconds interval(ms);
+  interval = std::chrono::milliseconds(ms);
 
-  for (const std::string& date : current_region_.GetDates()) {
-    MakeNoteFromAmount(current_region_.GetAmountAtDate(date), max_amount_);
+  current_date_index_ = 0;
 
-    // Pause for some time
-    std::this_thread::sleep_for(interval);
+  in_sonification_playback = true;
+}
 
-    // TODO: later: visualize
-    // visualization code will go here lol (or that may be handled by MakeNote)
-  }
+void CovidSonificationApp::DisplayCurrentDataset() {
+  // No display necessary if no dataset is selected
+  if (dataset_selection_ == 0) return;
 
-  StopNote();
+  std::stringstream current_dataset_message;
+  current_dataset_message << "Sonifying "
+                          << kDatasetNames.at(dataset_selection_) << " of "
+                          << current_region_.GetRegionName();
+  const cinder::ivec2 size = {500, 50};
+  const cinder::vec2 location = {getWindowCenter().x, 75};
+
+  ShowText(current_dataset_message.str(),
+           cinder::Color::white(),
+           size, location);
+}
+
+void CovidSonificationApp::DisplayCurrentNoteData() {
+  if (dataset_selection_ == 0) return;
+
+  std::string label = kDatasetNames.at(dataset_selection_);
+
+  // Convert label to all lower case
+  // https://stackoverflow.com/questions/313970/how-to-convert-stdstring-to-lower-case
+  std::transform(label.begin(), label.end(), label.begin(),
+      [](unsigned char c) { return std::tolower(c); });
+
+  std::stringstream note_data_message;
+  note_data_message << current_date_ << ": "
+                    << current_amount_ << " "
+                    << label;
+  const cinder::ivec2 size = {600, 100};
+  const cinder::vec2 location = {getWindowSize().x - 300, 75};
+
+  ShowText(note_data_message.str(), cinder::Color::white(), size, location);
 }
 
 int CovidSonificationApp::GetHighestRegionalAmount(
@@ -757,6 +810,5 @@ int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {
   const int ms_per_second = 1000;
   return (seconds_per_minute * ms_per_second) / bpm;
 }
-
 
 }  // namespace covidsonifapp

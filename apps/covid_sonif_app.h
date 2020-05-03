@@ -59,6 +59,9 @@ class CovidSonificationApp : public cinder::app::App {
   void SonifyData();
   static void PrintAudioGraph();
   void DisplayTitle();
+  void DisplayCurrentDataset();
+  void DisplayCurrentNoteData();
+
 
  /*
   * Private helper functions
@@ -80,7 +83,7 @@ class CovidSonificationApp : public cinder::app::App {
   void AssignBpm(size_t set_bpm);
   void SetupDataSonificationParams();
   void RemoveDataSonificationParams();
-  void ShowText(const std::string& text, const cinder::Color& color,
+  static void ShowText(const std::string& text, const cinder::Color& color,
                 const cinder::ivec2& size, const cinder::vec2& loc);
   static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
   static int GetHighestAmountInData(const coviddata::DataSet &ds,
@@ -118,14 +121,21 @@ class CovidSonificationApp : public cinder::app::App {
   // Instance variables for COVID-19 Data
   std::vector<std::string> region_names_;
   int max_amount_ = 0;
+  std::string current_date_ = {};
+  int current_amount_ = coviddata::kNullAmount;
+  size_t current_date_index_ = 0;
 
-  // Instance variables for sonification parameters
-  size_t max_midi_pitch_ = 48;  // C4
-  size_t min_midi_pitch_ = 96;  // C8
-  int bpm_ = 240;
+  // Initial values for sonification parameters
+  size_t max_midi_pitch_ = 127;  // C8
+  size_t min_midi_pitch_ = 0;  // C4
+  int bpm_ = 999;
+  std::chrono::milliseconds interval;
+  size_t current_midi_pitch_;
 
-  // Current selection of parameters for OpenGL params
-  size_t instrument_enum_selection_ = 13;
+  bool in_sonification_playback = false;
+
+  // Initial selection for audio synthesis params
+  size_t instrument_enum_selection_ = 6;
   size_t generator_enum_selection_ = 0;
   size_t effect_enum_selection = 7;
   size_t dataset_selection_ = 0;
@@ -166,7 +176,11 @@ class CovidSonificationApp : public cinder::app::App {
   };
 
   const std::vector<std::string> kDatasetNames = {
-      "none", "New cases", "New deaths", "Total cases", "Total deaths"
+      "none",
+      "Daily increase of COVID-19 cases",
+      "Daily increase of COVID-19deaths",
+      "Total COVID-19 cases",
+      "Total COVID-19 deaths"
   };
 
  /*
