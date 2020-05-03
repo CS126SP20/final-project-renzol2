@@ -36,7 +36,7 @@ const float kInitialGain = 0.6f;
 
 const size_t kNumPitchClasses = 12;
 
-const char kNormalFont[] = "Helvetica";
+const char kNormalFont[] = "Consolas";
 
 
 using cinder::app::KeyEvent;
@@ -55,9 +55,6 @@ void CovidSonificationApp::setup() {
 
   master_gain_ = ctx->makeNode<cinder::audio::GainNode>(kInitialGain);
   master_gain_ >> ctx->getOutput();
-
-  // Mapping generator gain to mouse y value
-  generator_gain_ = ctx->makeNode<cinder::audio::GainNode>(0);
 
   SetupParams();
   HandleInstrumentsSelected();
@@ -96,6 +93,7 @@ void CovidSonificationApp::update() {
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
   DisplayTitle();
+  DisplayPitch();
   params_->draw();
 
   if (in_sonification_playback) {
@@ -131,7 +129,6 @@ void CovidSonificationApp::SetupParams() {
   // Setup all parameters for each instance variable
   SetupMasterGain();
   SetupInstruments();
-  SetupGenerators();
   SetupEffects();
   SetupScale();
   SetupMaxMidiPitchParam();
@@ -153,21 +150,7 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
   float gain = 0.0f + pos.x / (float)getWindowWidth();
 
   // Set frequency and gain to instrument/generator accordingly
-  if (instrument_) {
-    instrument_->noteOn(freq, gain);
-  } else if (generator_) {
-    generator_gain_->getParam()->applyRamp(gain, 0.05f);
-
-    auto blit_node = std::dynamic_pointer_cast<cistk::BlitNode>(generator_);
-    if (blit_node) {
-      blit_node->setFrequency(freq);
-      return;
-    }
-
-    auto granulator_node =
-        std::dynamic_pointer_cast<cistk::GranulateNode>(generator_);
-    if (granulator_node) return;
-  }
+  HandleNote(freq, gain);
 }
 
 void CovidSonificationApp::MakeNoteFromAmount(const int amount,
@@ -180,22 +163,13 @@ void CovidSonificationApp::MakeNoteFromAmount(const int amount,
 
   float gain = master_gain_->getValue();
 
-  // TODO: identical to other MakeNote, break into own function
   // Set frequency and gain to instrument/generator accordingly
+  HandleNote(freq, gain);
+}
+
+void CovidSonificationApp::HandleNote(float freq, float gain) {
   if (instrument_) {
     instrument_->noteOn(freq, gain);
-  } else if (generator_) {
-    generator_gain_->getParam()->applyRamp(gain, 0.05f);
-
-    auto blit_node = std::dynamic_pointer_cast<cistk::BlitNode>(generator_);
-    if (blit_node) {
-      blit_node->setFrequency(freq);
-      return;
-    }
-
-    auto granulator_node =
-        std::dynamic_pointer_cast<cistk::GranulateNode>(generator_);
-    if (granulator_node) return;
   }
 }
 
@@ -232,6 +206,9 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
     }
   }
 
+  // Set current pitch for display
+  current_midi_pitch_ = pitch_midi;
+
   return cinder::audio::midiToFreq((float)pitch_midi);
 }
 
@@ -264,17 +241,15 @@ float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
     }
   }
 
+  // Set current pitch for display
+  current_midi_pitch_ = pitch_midi;
+
   return cinder::audio::midiToFreq((float)pitch_midi);
 }
 
 void CovidSonificationApp::HandleInstrumentsSelected() {
   // Disconnect all currently used instruments
   if (instrument_) instrument_->disconnectAll();
-  if (generator_)  generator_->disconnectAll();
-
-  generator_enum_selection_ = 0;  // set generator to "none"
-  generator_ = nullptr;
-  generator_gain_->setValue(0);
 
   // Get the name of selected instrument and notify user
   const std::string& name = kInstrumentNames.at(instrument_enum_selection_);
@@ -286,69 +261,18 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
     auto instr = ctx->makeNode<cistk::BandedWGNode>();
     instr->setPreset(3);  // preset: 'Tibetan Bowl'
     instrument_ = instr;
-  } else if (name == "BlowBotl") {
-    instrument_ = ctx->makeNode<cistk::BlowBotlNode>();
   } else if (name == "BlowHole") {
     instrument_ = ctx->makeNode<cistk::BlowHoleNode>();
   } else if (name == "Bowed") {
     instrument_ = ctx->makeNode<cistk::BowedNode>();
-  } else if( name == "Brass" ) {
-    instrument_ = ctx->makeNode<cistk::BrassNode>();
   } else if( name == "Clarinet" ) {
     instrument_ = ctx->makeNode<cistk::ClarinetNode>();
-  } else if( name == "Drummer" ) {
-    instrument_ = ctx->makeNode<cistk::DrummerNode>();
-  } else if( name == "Flute" ) {
-    instrument_ = ctx->makeNode<cistk::FluteNode>();
   } else if( name == "Mandolin" ) {
     instrument_ = ctx->makeNode<cistk::MandolinNode>();
-  } else if (name == "Mesh2D") {
-    auto instr = ctx->makeNode<cistk::Mesh2DNode>();
-    instr->setDecay(0.9f);
-    instrument_ = instr;
-  } else if( name == "ModalBar" ) {
-    auto instr = ctx->makeNode<cistk::ModalBarNode>();
-    instr->setPreset( 1 ); // preset: 'Vibraphone'
-    instrument_ = instr;
-  } else if( name == "Moog" ) {
-    instrument_ = ctx->makeNode<cistk::MoogNode>();
   } else if( name == "Plucked" ) {
     instrument_ = ctx->makeNode<cistk::PluckedNode>();
-  } else if( name == "Resonate" ) {
-    instrument_ = ctx->makeNode<cistk::ResonateNode>();
   } else if( name == "Saxofony" ) {
     instrument_ = ctx->makeNode<cistk::SaxofonyNode>();
-  } else if( name == "Shakers" ) {
-    instrument_ = ctx->makeNode<cistk::ShakersNode>();
-  } else if( name == "Simple" ) {
-    instrument_ = ctx->makeNode<cistk::SimpleNode>();
-  } else if( name == "Sitar" ) {
-    instrument_ = ctx->makeNode<cistk::SitarNode>();
-  } else if( name == "StifKarp" ) {
-    instrument_ = ctx->makeNode<cistk::StifKarpNode>();
-  } else if( name == "VoicForm" ) {
-    auto instr = ctx->makeNode<cistk::VoicFormNode>();
-    if( ! instr->setPhoneme( "ooo" ) ) {
-      CI_LOG_W( "phoneme not found" );
-    }
-    instr->quiet();
-    instrument_ = instr;
-  } else if( name == "BeeThree" ) {
-    instrument_ = ctx->makeNode<cistk::BeeThreeNode>();
-  } else if( name == "FMVoices" ) {
-    instrument_ = ctx->makeNode<cistk::FMVoicesNode>();
-  } else if( name == "HevyMetl" ) {
-    instrument_ = ctx->makeNode<cistk::HevyMetlNode>();
-  } else if( name == "PercFlut" ) {
-    instrument_ = ctx->makeNode<cistk::PercFlutNode>();
-  } else if( name == "Rhodey" ) {
-    instrument_ = ctx->makeNode<cistk::RhodeyNode>();
-  } else if( name == "TubeBell" ) {
-    instrument_ = ctx->makeNode<cistk::TubeBellNode>();
-  } else if( name == "Wurley" ) {
-    instrument_ = ctx->makeNode<cistk::WurleyNode>();
-  } else if( name == "Whistle" ) {
-    instrument_ = ctx->makeNode<cistk::WhistleNode>();
   } else {
     CI_LOG_E("Unknown instrument name");
     // CI_ASSERT_NOT_REACHABLE();
@@ -361,42 +285,9 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
   master_gain_ >> ctx->getOutput();
 }
 
-void CovidSonificationApp::HandleGeneratorSelected() {
-  // Disconnect all instruments and generators before reassigning
-  if (instrument_) instrument_->disconnectAll();
-  if (generator_) generator_->disconnectAll();
-
-  instrument_ = nullptr;
-  instrument_enum_selection_ = 0;  // set to "none"
-
-  // Fetch the name of the generator
-  const std::string& name = kGeneratorNames.at(generator_enum_selection_);
-  CI_LOG_I("Selecting generator '" << name << "'");
-
-  // Assign the generator based on its name
-  auto ctx = cinder::audio::master();
-
-  if (name == "Blit") {
-    generator_ = ctx->makeNode<cistk::BlitNode>();
-  } else if (name == "Granulate") {
-    auto gen = ctx->makeNode<cistk::GranulateNode>(
-        1, stk::Stk::rawwavePath() + "ahh.raw", true);  // I don't understand this line...
-    generator_ = gen;
-  } else {
-    CI_LOG_E("Unknown generator name");
-    CI_ASSERT_NOT_REACHABLE();
-  }
-
-  // Run the generator signal through the effect if applicable
-  if (effect_) generator_ >> generator_gain_ >> effect_ >> master_gain_;
-  else         generator_ >> generator_gain_ >> master_gain_;
-
-  master_gain_ >> ctx->getOutput();
-}
-
 void CovidSonificationApp::HandleEffectSelected() {
-  // Effects can only be applied if a sound is generated/played.
-  CI_ASSERT( instrument_ || generator_ );
+  // Effects can only be applied if a sound is played.
+  CI_ASSERT( instrument_ );
 
   master_gain_->disconnectAll();
   if( effect_ )
@@ -409,41 +300,19 @@ void CovidSonificationApp::HandleEffectSelected() {
   auto ctx = cinder::audio::master();
 
   // Assign the effect accordingly
-  if( name == "none" ) {
-    // reset and bypass effect
-    effect_.reset();
-    instrument_ >> master_gain_ >> ctx->getOutput();
-    if( instrument_ ) instrument_ >> master_gain_ >> ctx->getOutput();
-    else              generator_  >> master_gain_ >> ctx->getOutput();
-    return;
-  } else if( name == "Echo" ) {
-    effect_ = ctx->makeNode<cistk::EchoNode>();
-  } else if( name == "Chorus" ) {
-    effect_ = ctx->makeNode<cistk::ChorusNode>();
-  } else if( name == "PitShift" ) {
-    auto effect = ctx->makeNode<cistk::PitShiftNode>();
-    effect->setShift( 0.5f );
-    effect_ = effect;
-  } else if( name == "LentPitShift" ) {
-    auto effect = ctx->makeNode<cistk::LentPitShiftNode>();
-    effect->setShift( 0.5f );
-    effect_ = effect;
-  } else if( name == "PRCRev" ) {
+  if (name == "PRCRev") {
     effect_ = ctx->makeNode<cistk::PRCRevNode>();
-  } else if( name == "JCRev" ) {
+  } else if(name == "JCRev") {
     effect_ = ctx->makeNode<cistk::JCRevNode>();
-  } else if( name == "NRev" ) {
+  } else if(name == "NRev") {
     effect_ = ctx->makeNode<cistk::NRevNode>();
-  } else if( name == "FreeVerb" ) {
-    effect_ = ctx->makeNode<cistk::FreeVerbNode>();
   } else {
     CI_LOG_E( "Unknown effect name" );
     CI_ASSERT_NOT_REACHABLE();
   }
 
-  // Play either instrument or generator through effect
+  // Play either instrument through effect
   if( instrument_ ) instrument_ >> effect_;
-  else              generator_ >> effect_;
 
   effect_ >> master_gain_ >> ctx->getOutput();
 }
@@ -555,19 +424,6 @@ void CovidSonificationApp::SetupInstruments() {
       .keyIncr("]")
       .updateFn([this] {
         HandleInstrumentsSelected();
-        PrintAudioGraph();
-      });
-}
-
-void CovidSonificationApp::SetupGenerators() {
-  // Set generator as a parameter
-  params_
-      ->addParam("Generator", kGeneratorNames,
-                 (int*)&generator_enum_selection_)
-      .keyDecr("u")
-      .keyIncr("i")
-      .updateFn([this] {
-        HandleGeneratorSelected();
         PrintAudioGraph();
       });
 }
@@ -695,6 +551,29 @@ void CovidSonificationApp::SonifyData() {
   in_sonification_playback = true;
 }
 
+void CovidSonificationApp::DisplayTitle() {
+  const cinder::vec2 center = getWindowCenter();
+  const cinder::ivec2 size = {500, 50};
+  const cinder::Color color = cinder::Color::white();
+
+  ShowText("This is what COVID-19 sounds like.", color, size, center);
+}
+
+void CovidSonificationApp::DisplayPitch() {
+  std::stringstream pitch_message;
+  if (current_midi_pitch_ > kAbsoluteMaxPitchMidi) {
+    pitch_message << "Click anywhere to play a note!";
+  } else {
+    pitch_message << "Current MIDI pitch: " << current_midi_pitch_;
+  }
+
+  const cinder::vec2 location = {getWindowSize().x - 300, 130};
+  const cinder::ivec2 size = {500, 50};
+  const cinder::Color color = cinder::Color::white();
+
+  ShowText(pitch_message.str(), color, size, location);
+}
+
 void CovidSonificationApp::DisplayCurrentDataset() {
   // No display necessary if no dataset is selected
   if (dataset_selection_ == 0) return;
@@ -703,7 +582,7 @@ void CovidSonificationApp::DisplayCurrentDataset() {
   current_dataset_message << "Sonifying "
                           << kDatasetNames.at(dataset_selection_) << " of "
                           << current_region_.GetRegionName();
-  const cinder::ivec2 size = {500, 50};
+  const cinder::ivec2 size = {700, 50};
   const cinder::vec2 location = {getWindowCenter().x, 75};
 
   ShowText(current_dataset_message.str(),
@@ -715,17 +594,11 @@ void CovidSonificationApp::DisplayCurrentNoteData() {
   if (dataset_selection_ == 0) return;
 
   std::string label = kDatasetNames.at(dataset_selection_);
-
-  // Convert label to all lower case
-  // https://stackoverflow.com/questions/313970/how-to-convert-stdstring-to-lower-case
-  std::transform(label.begin(), label.end(), label.begin(),
-      [](unsigned char c) { return std::tolower(c); });
-
   std::stringstream note_data_message;
-  note_data_message << current_date_ << ": "
+  note_data_message << current_date_ << ": \n"
                     << current_amount_ << " "
                     << label;
-  const cinder::ivec2 size = {600, 100};
+  const cinder::ivec2 size = {600, 200};
   const cinder::vec2 location = {getWindowSize().x - 300, 75};
 
   ShowText(note_data_message.str(), cinder::Color::white(), size, location);
@@ -764,8 +637,6 @@ int CovidSonificationApp::GetHighestAmountInData(const coviddata::DataSet& ds,
 void CovidSonificationApp::StopNote() {
   if (instrument_) {
     instrument_->noteOff(0.5);
-  } else if (generator_) {
-    generator_gain_->getParam()->applyRamp(0, 0.2f);
   }
 }
 
@@ -795,14 +666,6 @@ void CovidSonificationApp::ShowText(const std::string& text,
   const auto surface = box.render();
   const auto texture = cinder::gl::Texture::create(surface);
   cinder::gl::draw(texture, locp);
-}
-
-void CovidSonificationApp::DisplayTitle() {
-  const cinder::vec2 center = getWindowCenter();
-  const cinder::ivec2 size = {500, 50};
-  const cinder::Color color = cinder::Color::white();
-
-  ShowText("This is what COVID-19 sounds like.", color, size, center);
 }
 
 int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {

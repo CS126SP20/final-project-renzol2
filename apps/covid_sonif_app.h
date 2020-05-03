@@ -50,7 +50,6 @@ class CovidSonificationApp : public cinder::app::App {
   float QuantizePitchFromAmount(int amount, int max_amount);
   void StopNote();
   void HandleInstrumentsSelected();
-  void HandleGeneratorSelected();
   void HandleEffectSelected();
   bool HandleInstrumentSpecificNote(const cinder::vec2 &pos);
   void HandleDataSelected();
@@ -59,6 +58,7 @@ class CovidSonificationApp : public cinder::app::App {
   void SonifyData();
   static void PrintAudioGraph();
   void DisplayTitle();
+  void DisplayPitch();
   void DisplayCurrentDataset();
   void DisplayCurrentNoteData();
 
@@ -69,7 +69,6 @@ class CovidSonificationApp : public cinder::app::App {
  private:
   void SetupMasterGain();
   void SetupInstruments();
-  void SetupGenerators();
   void SetupEffects();
   void SetupData();
   void SetupRegions();
@@ -83,6 +82,7 @@ class CovidSonificationApp : public cinder::app::App {
   void AssignBpm(size_t set_bpm);
   void SetupDataSonificationParams();
   void RemoveDataSonificationParams();
+  void HandleNote(float freq, float gain);
   static void ShowText(const std::string& text, const cinder::Color& color,
                 const cinder::ivec2& size, const cinder::vec2& loc);
   static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
@@ -106,15 +106,11 @@ class CovidSonificationApp : public cinder::app::App {
  private:
   ci::audio::GainNodeRef master_gain_;
 
-  // Note: the input will either be the instrument or generator
   cistk::InstrumentNodeRef instrument_;
-  cistk::GeneratorNodeRef generator_;
   cistk::EffectNodeRef effect_;
   Scale current_scale_;
   coviddata::DataSet current_data_;
   coviddata::RegionData current_region_;
-
-  ci::audio::GainNodeRef generator_gain_;
 
   cinder::params::InterfaceGlRef params_;
 
@@ -124,23 +120,22 @@ class CovidSonificationApp : public cinder::app::App {
   std::string current_date_ = {};
   int current_amount_ = coviddata::kNullAmount;
   size_t current_date_index_ = 0;
+  size_t current_midi_pitch_;
 
-  // Initial values for sonification parameters
-  size_t max_midi_pitch_ = 127;  // C8
-  size_t min_midi_pitch_ = 0;  // C4
+  // Variables for sonification parameters (set to initial values)
+  size_t max_midi_pitch_ = 127;
+  size_t min_midi_pitch_ = 0;
   int bpm_ = 999;
   std::chrono::milliseconds interval;
-  size_t current_midi_pitch_;
 
   bool in_sonification_playback = false;
 
-  // Initial selection for audio synthesis params
-  size_t instrument_enum_selection_ = 6;
-  size_t generator_enum_selection_ = 0;
-  size_t effect_enum_selection = 7;
+  // Audio synthesis params (set to initial values)
+  size_t instrument_enum_selection_ = 4;
+  size_t effect_enum_selection = 0;
   size_t dataset_selection_ = 0;
   size_t region_selection_ = 0;
-  size_t scale_selection_ = 0;
+  size_t scale_selection_ = 4;
 
   float last_freq_ = 0;
 
@@ -152,20 +147,11 @@ class CovidSonificationApp : public cinder::app::App {
   const std::string kMinPitchParamName = "Min pitch (MIDI)";
 
   const std::vector<std::string> kInstrumentNames = {
-      "none",     "BandedWG", "BlowBotl", "BlowHole", "Bowed",    "Brass",
-      "Clarinet", "Drummer",  "Flute",    "Mandolin", "Mesh2D",   "ModalBar",
-      "Moog",     "Plucked",  "Resonate", "Saxofony", "Shakers",  "Simple",
-      "Sitar",    "StifKarp", "VoicForm", "Whistle",  "BeeThree", "FMVoices",
-      "HevyMetl", "PercFlut", "Rhodey",   "TubeBell", "Wurley"
-  };
-
-  const std::vector<std::string> kGeneratorNames = {
-      "none", "Blit", "Granulate"
-  };
+      "none",     "BandedWG", "BlowHole", "Bowed",
+      "Clarinet", "Mandolin", "Plucked",  "Saxofony"};
 
   const std::vector<std::string> kEffectNames = {
-      "none", "Echo", "Chorus", "PitShift", "LentPitShift",
-      "PRCRev", "JCRev", "NRev", "FreeVerb"
+      "PRCRev", "JCRev", "NRev"
   };
 
   const std::vector<std::string> kDataFileNames = {
