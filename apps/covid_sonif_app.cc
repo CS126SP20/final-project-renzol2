@@ -101,6 +101,8 @@ void CovidSonificationApp::draw() {
 
   if (in_sonification_playback) {
     DisplayCurrentNoteData();
+    // TODO: allow user to choose whether to visualize or just sonify
+    DrawNoteData();
   }
 }
 
@@ -538,9 +540,6 @@ void CovidSonificationApp::AssignBpm(size_t set_bpm) {
 
 void CovidSonificationApp::SetupDataSonificationParams() {
   SetupRegions();
-
-  params_->addSeparator();
-
   SetupBpm();
   SetupSonifyButton();
 }
@@ -618,6 +617,25 @@ void CovidSonificationApp::DisplayCurrentNoteData() {
   ShowText(note_data_message.str(), cinder::Color::white(), size, location);
 }
 
+void CovidSonificationApp::DrawNoteData() {
+  // TODO: allow user to choose color
+  const size_t point_size = 3;
+  cinder::gl::color(cinder::Color(1, 0, 0));  // red for now
+
+  // Draw previous data points
+  for (size_t i = 0; i < current_date_index_; i++) {
+    int amount =
+        current_region_.GetAmountAtDate(current_region_.GetDates().at(i));
+
+    // Skip this data point if the data is unavailable
+    if (amount == coviddata::kNullAmount) continue;
+
+    cinder::gl::drawSolidCircle(
+        ConvertDataPointToPosition(i, amount),
+        point_size);
+  }
+}
+
 int CovidSonificationApp::GetHighestRegionalAmount(
     const coviddata::RegionData& rd) {
   // Find highest note of regional dataset
@@ -687,5 +705,28 @@ int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {
   const int ms_per_second = 1000;
   return (seconds_per_minute * ms_per_second) / bpm;
 }
+
+cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
+                                                              int amount) {
+  // Map date index to the screen length position and find converted value
+  int x = std::lroundf(cinder::lmap(
+      (float)date_index,
+      (float)0,
+      (float)current_region_.GetDates().size(),
+      0.0f,
+      (float)getWindowWidth()));
+
+  // Map min/max MIDI pitch to the screen height position and find converted value
+  int y = std::lroundf(cinder::lmap(
+      (float)amount,  // value to map
+      0.0f,
+      (float)max_amount_,
+      (float)getWindowHeight(),
+      0.0f));
+
+  return {x, y};
+}
+
+
 
 }  // namespace covidsonifapp

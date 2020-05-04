@@ -61,6 +61,7 @@ class CovidSonificationApp : public cinder::app::App {
   void DisplayPitch();
   void DisplayCurrentDataset();
   void DisplayCurrentNoteData();
+  void DrawNoteData();
 
 
  /*
@@ -89,6 +90,7 @@ class CovidSonificationApp : public cinder::app::App {
   static int GetHighestAmountInData(const coviddata::DataSet &ds,
                                     bool include_world);
   static int ConvertBpmToMilliseconds(int bpm);
+  cinder::vec2 ConvertDataPointToPosition(size_t date_index, int amount);
 
  /*
   * Internal structure class for scales
@@ -164,7 +166,7 @@ class CovidSonificationApp : public cinder::app::App {
   const std::vector<std::string> kDatasetNames = {
       "none",
       "Daily increase of COVID-19 cases",
-      "Daily increase of COVID-19deaths",
+      "Daily increase of COVID-19 deaths",
       "Total COVID-19 cases",
       "Total COVID-19 deaths"
   };
