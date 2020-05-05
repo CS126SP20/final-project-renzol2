@@ -785,22 +785,31 @@ int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {
 
 cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
                                                               int amount) {
+  float total_width_empty = (1.0f - visualization_width_scaling_);
+  float total_height_empty = (1.0f - visualization_height_scaling_);
+
   // Map date index to the screen length position and find converted value
   int x = std::lroundf(cinder::lmap(
       (float)date_index,
       (float)0,
       (float)current_region_.GetDates().size(),
-      0.0f,
-      (float)getWindowWidth() * visualization_width_scaling_));
+      0.0f + (float)getWindowWidth() * (total_width_empty / 2.0f),
+      (float)getWindowWidth() *
+          (visualization_width_scaling_ + total_width_empty / 2)
+      ));
 
   // Map min/max MIDI pitch to the screen height position and find converted value
-  int y = std::lroundf(cinder::lmap(
+  int y = std::lroundf(
+      cinder::lmap(
       (float)amount,  // value to map
       0.0f,
       (float)max_amount_,
-      (float)getWindowHeight(),
-      0.0f + (1.0f - visualization_height_scaling_) * (float)getWindowHeight()));
+      (float)getWindowHeight() *
+          (visualization_height_scaling_ + total_height_empty / 2),
+      0.0f + (total_height_empty / 2) * (float)getWindowHeight()
+      ));
 
+  // Total window space occupied by visualization is centered
   return {x, y};
 }
 
