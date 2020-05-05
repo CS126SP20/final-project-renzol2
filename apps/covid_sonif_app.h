@@ -174,16 +174,24 @@ class CovidSonificationApp : public cinder::app::App {
   const std::vector<std::string> kDatasetFilepaths = {
       getAssetPath("data/new_cases.csv").string(),
       getAssetPath("data/new_deaths.csv").string(),
+      getAssetPath("data/new_cases_per_million.csv").string(),
+      getAssetPath("data/new_deaths_per_million.csv").string(),
       getAssetPath("data/total_cases.csv").string(),
-      getAssetPath("data/total_deaths.csv").string()
+      getAssetPath("data/total_deaths.csv").string(),
+      getAssetPath("data/total_cases_per_million.csv").string(),
+      getAssetPath("data/total_deaths_per_million.csv").string()
   };
 
   const std::vector<std::string> kDatasetNames = {
       "none",
       "Daily increase of COVID-19 cases",
       "Daily increase of COVID-19 deaths",
+      "Daily increase of cases per million",
+      "Daily increase of deaths per million",
       "Total COVID-19 cases",
-      "Total COVID-19 deaths"
+      "Total COVID-19 deaths",
+      "Total cases per million",
+      "Total deaths per million",
   };
 
   const size_t kRegionalMax = 0;
