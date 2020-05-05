@@ -72,8 +72,7 @@ void CovidSonificationApp::update() {
     if (current_date_index_ == current_region_.GetDates().size()) {
       in_sonification_playback = false;
       StopNote();
-      current_date_ = {};
-      current_amount_ = coviddata::kNullAmount;
+      finished_playback = true;
       return;
     }
 
@@ -93,7 +92,7 @@ void CovidSonificationApp::update() {
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
 
-  if (!in_sonification_playback) {
+  if (!in_sonification_playback && !finished_playback) {
     DisplayDirections();
     DisplayVisualizationToggle();
   }
@@ -103,13 +102,18 @@ void CovidSonificationApp::draw() {
 
   params_->draw();
 
-  if (in_sonification_playback) {
+  if (in_sonification_playback || finished_playback) {
     DisplayCurrentNoteData();
     if (is_visualizing) DrawNoteData();
   }
 }
 
 void CovidSonificationApp::mouseDown(cinder::app::MouseEvent event) {
+  if (finished_playback) {
+    current_date_ = {};
+    current_amount_ = coviddata::kNullAmount;
+    finished_playback = !finished_playback;
+  }
   MakeNote(event.getPos());
 }
 
@@ -569,7 +573,7 @@ void CovidSonificationApp::SonifyData() {
 }
 
 void CovidSonificationApp::DisplayDirections() {
-  const std::string directions =
+  std::string directions =
       "Select a dataset and press 'Sonify' to hear how it sounds.\n"
       "Change the settings as desired.";
 
