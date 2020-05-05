@@ -93,7 +93,11 @@ void CovidSonificationApp::update() {
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
 
-  if (!in_sonification_playback) DisplayDirections();
+  if (!in_sonification_playback) {
+    DisplayDirections();
+    DisplayVisualizationToggle();
+  }
+
   DisplayPitch();
   DisplayCurrentDataset();
 
@@ -101,8 +105,7 @@ void CovidSonificationApp::draw() {
 
   if (in_sonification_playback) {
     DisplayCurrentNoteData();
-    // TODO: allow user to choose whether to visualize or just sonify
-    DrawNoteData();
+    if (is_visualizing) DrawNoteData();
   }
 }
 
@@ -476,6 +479,12 @@ void CovidSonificationApp::SetupSonifyButton() {
   });
 }
 
+void CovidSonificationApp::SetupVisualizeButton() {
+  params_->addButton("Toggle visualization", [this] {
+    is_visualizing = !is_visualizing;
+  });
+}
+
 void CovidSonificationApp::SetupMaxMidiPitchParam() {
   params_
       ->addParam<size_t>(
@@ -541,6 +550,7 @@ void CovidSonificationApp::AssignBpm(size_t set_bpm) {
 void CovidSonificationApp::SetupDataSonificationParams() {
   SetupRegions();
   SetupBpm();
+  SetupVisualizeButton();
   SetupSonifyButton();
 }
 
@@ -617,6 +627,18 @@ void CovidSonificationApp::DisplayCurrentNoteData() {
   ShowText(note_data_message.str(), cinder::Color::white(), size, location);
 }
 
+
+void CovidSonificationApp::DisplayVisualizationToggle() {
+  if (dataset_selection_ == 0) return;
+
+  std::stringstream message;
+  message << "Visualization: " << (is_visualizing ? "ON" : "OFF");
+  const cinder::ivec2 size = {600, 200};
+  const cinder::vec2 location = {getWindowCenter().x, 130};
+
+  ShowText(message.str(), cinder::Color::white(), size, location);
+}
+
 void CovidSonificationApp::DrawNoteData() {
   // TODO: allow user to choose color
   const size_t point_size = 3;
@@ -675,6 +697,7 @@ void CovidSonificationApp::StopNote() {
 void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Region");
   params_->removeParam("BPM");
+  params_->removeParam("Toggle visualization");
   params_->removeParam("Sonify!");
 }
 
@@ -726,7 +749,6 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
 
   return {x, y};
 }
-
 
 
 }  // namespace covidsonifapp

@@ -61,6 +61,7 @@ class CovidSonificationApp : public cinder::app::App {
   void DisplayPitch();
   void DisplayCurrentDataset();
   void DisplayCurrentNoteData();
+  void DisplayVisualizationToggle();
   void DrawNoteData();
 
 
@@ -80,6 +81,7 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupScale();
   void SetupBpm();
   void SetupSonifyButton();
+  void SetupVisualizeButton();
   void AssignBpm(size_t set_bpm);
   void SetupDataSonificationParams();
   void RemoveDataSonificationParams();
@@ -131,6 +133,8 @@ class CovidSonificationApp : public cinder::app::App {
   std::chrono::milliseconds interval;
 
   bool in_sonification_playback = false;
+  bool finished_playback = false;
+  bool is_visualizing = true;
 
   // Audio synthesis params (set to initial values)
   size_t instrument_enum_selection_ = 4;
