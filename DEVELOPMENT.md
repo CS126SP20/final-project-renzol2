@@ -27,3 +27,19 @@
                 region.
     - Included min/max MIDI pitches and scales as parameters for user
     - Allowed sonification playback to be controlled by master gain
+
+- **5/2/2020** Added BPM as a parameter during sonification playback.
+    - Also added two new datasets (new cases/new deaths per day)
+
+- **5/3/2020** Revamped visualization and appearance of app.
+    - Added displays for dataset and note values (both data and pitch)
+    - Cleaned parameters to only usable ones
+    - Added directions in middle of screen
+    - Partitioned parameters using separators
+    - Implemented graph visualization during sonification playback
+
+- **5/4/2020** Slightly changed behavior of visualization and settings
+    - Added a visualization toggle switch (can now turn visualization off)
+    - Visualization now stays after playback until user clicks anywhere
+    - Settings are now hidden during visualization
+    - Regions list in settings is now displayed in descending order by max amount
