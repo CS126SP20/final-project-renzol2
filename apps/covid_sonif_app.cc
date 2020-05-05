@@ -467,6 +467,19 @@ void CovidSonificationApp::SetupRegions() {
   // Data must be populated for regions to be setup
   if (current_data_.Empty()) return;
 
+  // Sort regions by their value before adding as parameter
+  std::sort(region_names_.begin(), region_names_.end(),
+      [this] (const std::string& x, const std::string& y) {
+              int x_max_amount = GetHighestRegionalAmount(
+                  current_data_.GetRegionDataByName(x));
+              int y_max_amount = GetHighestRegionalAmount(
+                  current_data_.GetRegionDataByName(y));
+              return x_max_amount < y_max_amount;
+            });
+
+  // Get the list of regions in descending order
+  std::reverse(region_names_.begin(), region_names_.end());
+
   params_->addParam("Region", region_names_, (int*)&region_selection_)
       .keyDecr("g")
       .keyIncr("h")
