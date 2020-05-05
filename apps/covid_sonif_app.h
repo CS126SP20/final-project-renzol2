@@ -81,8 +81,10 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupScale();
   void SetupBpm();
   void SetupSonifyButton();
+  void SetupVisualizationScaling();
   void SetupVisualizeButton();
   void AssignBpm(size_t set_bpm);
+  void AssignVisualizationScaling(float new_scaling);
   void SetupDataSonificationParams();
   void RemoveDataSonificationParams();
   void HandleNote(float freq, float gain);
@@ -132,6 +134,9 @@ class CovidSonificationApp : public cinder::app::App {
   int bpm_ = 999;
   std::chrono::milliseconds interval;
 
+  // Visualization parameters
+  float visualization_scaling_ = 1.0f;
+
   bool in_sonification_playback = false;
   bool finished_playback = false;
   bool is_visualizing = true;
@@ -161,7 +166,7 @@ class CovidSonificationApp : public cinder::app::App {
       "PRCRev", "JCRev", "NRev"
   };
 
-  const std::vector<std::string> kDataFileNames = {
+  const std::vector<std::string> kDatasetFilepaths = {
       getAssetPath("data/new_cases.csv").string(),
       getAssetPath("data/new_deaths.csv").string(),
       getAssetPath("data/total_cases.csv").string(),

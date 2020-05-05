@@ -32,6 +32,9 @@ const float kAbsoluteMinPitchMidi = 0;
 const size_t kMinBpm = 0;
 const size_t kMaxBpm = 999;
 
+const float kMinVisualizationScaling = 0.25f;
+const float kMaxVisualizationScaling = 1.0f;
+
 const float kInitialGain = 0.6f;
 
 const size_t kNumPitchClasses = 12;
@@ -346,7 +349,7 @@ void CovidSonificationApp::HandleDataSelected() {
       if (name == kDatasetNames.at(i)) {
         // Indices are offset by 1 because dataset names must
         // include "none" at the beginning.
-        const std::string& filename = kDataFileNames.at(i - 1);
+        const std::string& filename = kDatasetFilepaths.at(i - 1);
 
         current_data_.ImportData(filename);
         region_names_ = current_data_.GetRegions();
@@ -495,6 +498,24 @@ void CovidSonificationApp::SetupSonifyButton() {
   });
 }
 
+void CovidSonificationApp::SetupVisualizationScaling() {
+  params_
+      ->addParam<float>(
+          "Visualization scale",
+          [this] (float value) { AssignVisualizationScaling(value); },
+          [this] { return visualization_scaling_; })
+      .min(kMinVisualizationScaling)
+      .max(kMaxVisualizationScaling)
+      .step(0.05f);
+}
+
+void CovidSonificationApp::AssignVisualizationScaling(float new_scaling) {
+  if (new_scaling >= kMinVisualizationScaling &&
+      new_scaling <= kMaxVisualizationScaling) {
+    visualization_scaling_ = new_scaling;
+  }
+}
+
 void CovidSonificationApp::SetupVisualizeButton() {
   params_->addButton("Toggle visualization", [this] {
     is_visualizing = !is_visualizing;
@@ -567,6 +588,7 @@ void CovidSonificationApp::SetupDataSonificationParams() {
   SetupRegions();
   SetupBpm();
   SetupVisualizeButton();
+  SetupVisualizationScaling();
   SetupSonifyButton();
 }
 
@@ -713,6 +735,7 @@ void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Region");
   params_->removeParam("BPM");
   params_->removeParam("Toggle visualization");
+  params_->removeParam("Visualization scale");
   params_->removeParam("Sonify!");
 }
 
@@ -752,7 +775,7 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
       (float)0,
       (float)current_region_.GetDates().size(),
       0.0f,
-      (float)getWindowWidth()));
+      (float)getWindowWidth() * visualization_scaling_));
 
   // Map min/max MIDI pitch to the screen height position and find converted value
   int y = std::lroundf(cinder::lmap(
@@ -760,7 +783,7 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
       0.0f,
       (float)max_amount_,
       (float)getWindowHeight(),
-      0.0f));
+      0.0f + (1.0f - visualization_scaling_) * (float)getWindowHeight()));
 
   return {x, y};
 }
