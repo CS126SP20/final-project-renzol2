@@ -132,8 +132,8 @@ class CovidSonificationApp : public cinder::app::App {
   size_t current_midi_pitch_;
 
   // Variables for sonification parameters (set to initial values)
-  size_t max_midi_pitch_ = 127;
-  size_t min_midi_pitch_ = 0;
+  size_t max_midi_pitch_ = 96;
+  size_t min_midi_pitch_ = 36;
   int bpm_ = 999;
   std::chrono::milliseconds interval;
 

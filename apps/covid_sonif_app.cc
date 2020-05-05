@@ -705,10 +705,19 @@ void CovidSonificationApp::DisplayCurrentNoteData() {
   if (dataset_selection_ == 0) return;
 
   std::string label = kDatasetNames.at(dataset_selection_);
+  std::stringstream amount_display;
+
+  // Display alternate message if no data is available for the current date
+  if (current_amount_ == coviddata::kNullAmount) {
+    amount_display << "No data";
+  } else {
+    amount_display << current_amount_ << " " << label;
+  }
+
+  // Construct display message
   std::stringstream note_data_message;
-  note_data_message << current_date_ << ": \n"
-                    << current_amount_ << " "
-                    << label;
+  note_data_message << current_date_ << ": \n" << amount_display.str();
+
   const cinder::ivec2 size = {600, 200};
   const cinder::vec2 location = {getWindowSize().x - 300, 75};
 
