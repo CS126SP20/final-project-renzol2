@@ -154,17 +154,18 @@ class CovidSonificationApp : public cinder::app::App {
 
   const std::vector<std::string> kInstrumentNames = {
       "none",     "BandedWG", "BlowHole", "Bowed",
-      "Clarinet", "Mandolin", "Plucked",  "Saxofony"};
+      "Clarinet", "Mandolin", "Plucked",  "Saxofony"
+  };
 
   const std::vector<std::string> kEffectNames = {
       "PRCRev", "JCRev", "NRev"
   };
 
   const std::vector<std::string> kDataFileNames = {
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_cases.csv)",
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\new_deaths.csv)",
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_cases.csv)",
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\assets\data\total_deaths.csv)"
+      getAssetPath("data/new_cases.csv").string(),
+      getAssetPath("data/new_deaths.csv").string(),
+      getAssetPath("data/total_cases.csv").string(),
+      getAssetPath("data/total_deaths.csv").string()
   };
 
   const std::vector<std::string> kDatasetNames = {
@@ -189,7 +190,6 @@ class CovidSonificationApp : public cinder::app::App {
   const std::vector<float> kWholeToneScale = {0, 2, 4, 6, 8, 10};
   const std::vector<float> kChromaticScale = {0, 1, 2, 3, 4,  5,
                                               6, 7, 8, 9, 10, 11};
-
 
   const std::vector<covidsonifapp::CovidSonificationApp::Scale> kScales = {
       {kScaleNames.at(0), kMajorScale,      kMajorScale.size()},
