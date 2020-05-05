@@ -45,9 +45,9 @@ class CovidSonificationApp : public cinder::app::App {
  public:
   void SetupParams();
   void MakeNote(const cinder::vec2& pos);
-  void MakeNoteFromAmount(int amount, int max_amount);
+  void MakeNoteFromAmount(float amount, float max_amount);
   float QuantizePitch(const cinder::vec2 &pos);
-  float QuantizePitchFromAmount(int amount, int max_amount);
+  float QuantizePitchFromAmount(float amount, float max_amount);
   void StopNote();
   void HandleInstrumentsSelected();
   void HandleEffectSelected();
@@ -91,11 +91,11 @@ class CovidSonificationApp : public cinder::app::App {
   void HandleNote(float freq, float gain);
   static void ShowText(const std::string& text, const cinder::Color& color,
                 const cinder::ivec2& size, const cinder::vec2& loc);
-  static int GetHighestRegionalAmount(const coviddata::RegionData& rd);
-  static int GetHighestAmountInData(const coviddata::DataSet &ds,
+  static float GetHighestRegionalAmount(const coviddata::RegionData& rd);
+  static float GetHighestAmountInData(const coviddata::DataSet &ds,
                                     bool include_world);
   static int ConvertBpmToMilliseconds(int bpm);
-  cinder::vec2 ConvertDataPointToPosition(size_t date_index, int amount);
+  cinder::vec2 ConvertDataPointToPosition(size_t date_index, float amount);
 
  /*
   * Internal structure class for scales
@@ -123,9 +123,9 @@ class CovidSonificationApp : public cinder::app::App {
 
   // Instance variables for COVID-19 Data
   std::vector<std::string> region_names_;
-  int max_amount_ = 0;
+  float max_amount_ = 0;
   std::string current_date_ = {};
-  int current_amount_ = coviddata::kNullAmount;
+  float current_amount_ = coviddata::kNullAmount;
   size_t current_date_index_ = 0;
   size_t current_midi_pitch_;
 

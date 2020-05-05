@@ -8,7 +8,7 @@
 
 
 /*
- * Most source code taken from StkTestApp:
+ * Source code for audio synthesis taken from StkTestApp:
  * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
  *
  * Original "StkTestApp" allows user to play any of the STK included
@@ -170,8 +170,7 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
   HandleNote(freq, gain);
 }
 
-void CovidSonificationApp::MakeNoteFromAmount(const int amount,
-                                              const int max_amount) {
+void CovidSonificationApp::MakeNoteFromAmount(float amount, float max_amount) {
   if (amount == coviddata::kNullAmount) return;
 
   // Get the quantized freq; check if it's significant enough to change
@@ -229,8 +228,8 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
   return cinder::audio::midiToFreq((float)pitch_midi);
 }
 
-float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
-                                                    const int max_amount) {
+float CovidSonificationApp::QuantizePitchFromAmount(float amount,
+                                                    float max_amount) {
   // Creates a mapping from [0, highest amount in data]
   //                     to [min MIDI pitch, max MIDI pitch]
   // Then finds the mapping of the specific data point to a specific MIDI pitch
@@ -473,9 +472,9 @@ void CovidSonificationApp::SetupRegions() {
   // Sort regions by their value before adding as parameter
   std::sort(region_names_.begin(), region_names_.end(),
       [this] (const std::string& x, const std::string& y) {
-              int x_max_amount = GetHighestRegionalAmount(
+              float x_max_amount = GetHighestRegionalAmount(
                   current_data_.GetRegionDataByName(x));
-              int y_max_amount = GetHighestRegionalAmount(
+              float y_max_amount = GetHighestRegionalAmount(
                   current_data_.GetRegionDataByName(y));
               return x_max_amount < y_max_amount;
             });
@@ -659,7 +658,7 @@ void CovidSonificationApp::DisplayCurrentDataset() {
   current_dataset_message << prefix
                           << kDatasetNames.at(dataset_selection_) << " of "
                           << current_region_.GetRegionName();
-  const cinder::ivec2 size = {700, 50};
+  const cinder::ivec2 size = {1000, 50};
   const cinder::vec2 location = {getWindowCenter().x, 75};
 
   ShowText(current_dataset_message.str(),
@@ -699,7 +698,7 @@ void CovidSonificationApp::DrawNoteData() {
 
   // Draw previous data points
   for (size_t i = 0; i < current_date_index_; i++) {
-    int amount =
+    float amount =
         current_region_.GetAmountAtDate(current_region_.GetDates().at(i));
 
     // Skip this data point if the data is unavailable
@@ -711,29 +710,29 @@ void CovidSonificationApp::DrawNoteData() {
   }
 }
 
-int CovidSonificationApp::GetHighestRegionalAmount(
+float CovidSonificationApp::GetHighestRegionalAmount(
     const coviddata::RegionData& rd) {
   // Find highest note of regional dataset
-  int max_amount = 0;
+  float max_amount = 0;
 
   for (const std::string& date : rd.GetDates()) {
-    int amount = rd.GetAmountAtDate(date);
+    float amount = rd.GetAmountAtDate(date);
     if (amount > max_amount) max_amount = amount;
   }
 
   return max_amount;
 }
 
-int CovidSonificationApp::GetHighestAmountInData(const coviddata::DataSet& ds,
+float CovidSonificationApp::GetHighestAmountInData(const coviddata::DataSet& ds,
                                                  bool include_world) {
-  int max_amount = 0;
+  float max_amount = 0;
 
   for (const std::string& region_name : ds.GetRegions()) {
     // Skips world if specified by user
     if (!include_world && region_name == "World") continue;
 
     coviddata::RegionData rd = ds.GetRegionDataByName(region_name);
-    int max_regional_amount = GetHighestRegionalAmount(rd);
+    float max_regional_amount = GetHighestRegionalAmount(rd);
 
     if (max_regional_amount > max_amount) max_amount = max_regional_amount;
   }
@@ -784,7 +783,7 @@ int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {
 }
 
 cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
-                                                              int amount) {
+                                                              float amount) {
   float total_width_empty = (1.0f - visualization_width_scaling_);
   float total_height_empty = (1.0f - visualization_height_scaling_);
 
@@ -799,9 +798,8 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
       ));
 
   // Map min/max MIDI pitch to the screen height position and find converted value
-  int y = std::lroundf(
-      cinder::lmap(
-      (float)amount,  // value to map
+  int y = std::lroundf(cinder::lmap(
+      amount,  // value to map
       0.0f,
       (float)max_amount_,
       (float)getWindowHeight() *

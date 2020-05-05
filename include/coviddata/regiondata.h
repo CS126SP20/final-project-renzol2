@@ -18,8 +18,8 @@ class RegionData {
  public:
   RegionData();
   RegionData(const std::string& region_name, size_t region_index);
-  void SetAmountToDate(const std::string& date, int amount);
-  int GetAmountAtDate(const std::string& date) const;
+  void SetAmountToDate(const std::string& date, float amount);
+  float GetAmountAtDate(const std::string& date) const;
   std::string GetRegionName() const;
   std::vector<std::string> GetDates() const;
   size_t GetRegionIndex() const;
@@ -27,7 +27,7 @@ class RegionData {
  private:
   std::string region_name_;
   size_t region_index_;
-  std::map<std::string, int> date_to_amount_;
+  std::map<std::string, float> date_to_amount_;
 };
 
 }  // namespace coviddata

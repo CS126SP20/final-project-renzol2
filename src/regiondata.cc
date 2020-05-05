@@ -15,11 +15,11 @@ RegionData::RegionData(const std::string& region_name, size_t region_index)
   region_index_ = region_index;
 }
 
-void RegionData::SetAmountToDate(const std::string& date, int amount) {
+void RegionData::SetAmountToDate(const std::string& date, float amount) {
   date_to_amount_.insert({date, amount});
 }
 
-int RegionData::GetAmountAtDate(const std::string& date) const {
+float RegionData::GetAmountAtDate(const std::string& date) const {
   return date_to_amount_.at(date);
 }
 

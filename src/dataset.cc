@@ -44,7 +44,7 @@ void DataSet::ImportData(const std::string& filename) {
 
       // Update the data with information from the line in the .csv file
       std::string date = current_line.values.at(0);
-      int amount = GetIntFromString(current_line.values.at(region_index));
+      float amount = GetNumberFromString(current_line.values.at(region_index));
       region_data.SetAmountToDate(date, amount);
     }
   }
@@ -93,17 +93,16 @@ void DataSet::InitializeRegionalData(coviddata::CsvParser::Line header) {
   }
 }
 
-
-int DataSet::GetIntFromString(const std::string& integer_string) {
+float DataSet::GetNumberFromString(const std::string& num_string) {
   // Empty entries cannot be converted into integers
-  if (integer_string.empty())
+  if (num_string.empty())
     return kNullAmount;
 
-  std::stringstream int_string(integer_string);
-  int integer;
-  int_string >> integer;
+  std::stringstream num_stringstream(num_string);
+  float num;
+  num_stringstream >> num;
 
-  return integer;
+  return num;
 }
 
 

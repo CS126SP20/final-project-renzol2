@@ -35,7 +35,7 @@ class DataSet {
   std::string data_type_;
  private:
   void InitializeRegionalData(coviddata::CsvParser::Line header);
-  static int GetIntFromString(const std::string& integer_string);
+  static float GetNumberFromString(const std::string& num_string);
 };
 
 } // namespace coviddata
