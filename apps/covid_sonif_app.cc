@@ -92,15 +92,14 @@ void CovidSonificationApp::update() {
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
 
-  if (!in_sonification_playback && !finished_playback) {
-    DisplayDirections();
-    DisplayVisualizationToggle();
-  }
-
   DisplayPitch();
   DisplayCurrentDataset();
 
-  params_->draw();
+  if (!in_sonification_playback && !finished_playback) {
+    DisplayDirections();
+    DisplayVisualizationToggle();
+    params_->draw();
+  }
 
   if (in_sonification_playback || finished_playback) {
     DisplayCurrentNoteData();
@@ -151,8 +150,9 @@ void CovidSonificationApp::SetupParams() {
 }
 
 void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
-  if (instrument_ && HandleInstrumentSpecificNote(pos))
+  if (instrument_ && HandleInstrumentSpecificNote(pos)) {
     return;
+  }
 
   // Get the quantized freq; check if it's significant enough to change
   float freq = QuantizePitch(pos);
@@ -262,14 +262,14 @@ float CovidSonificationApp::QuantizePitchFromAmount(const int amount,
 }
 
 void CovidSonificationApp::HandleInstrumentsSelected() {
-  // Disconnect all currently used instruments
+  // Disconnect all currently used instrument_s
   if (instrument_) instrument_->disconnectAll();
 
-  // Get the name of selected instrument and notify user
-  const std::string& name = kInstrumentNames.at(instrument_enum_selection_);
-  CI_LOG_I("Selecting instrument '" << name << "'" );
+  // Get the name of selected instrument_ and notify user
+  const std::string& name = kInstrumentNames.at(instrument_selection_);
+  CI_LOG_I("Selecting instrument_ '" << name << "'" );
 
-  // Set instrument accordingly
+  // Set instrument_ accordingly
   auto ctx = cinder::audio::master();
   if (name == "BandedWG") {
     auto instr = ctx->makeNode<cistk::BandedWGNode>();
@@ -288,7 +288,7 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
   } else if( name == "Saxofony" ) {
     instrument_ = ctx->makeNode<cistk::SaxofonyNode>();
   } else {
-    CI_LOG_E("Unknown instrument name");
+    CI_LOG_E("Unknown instrument_ name");
     // CI_ASSERT_NOT_REACHABLE();
   }
 
@@ -389,8 +389,7 @@ void CovidSonificationApp::HandleScaleSelected() {
  * (being Mesh2D and ModalBar) have to be dealt with individually... not sure tho
  * @param pos position of... mouse?
  */
-bool CovidSonificationApp::HandleInstrumentSpecificNote(
-    const cinder::vec2& pos) {
+bool CovidSonificationApp::HandleInstrumentSpecificNote(const cinder::vec2& pos) {
   // Not sure what this does yet...
   cinder::vec2 pos_normalized =
       glm::clamp(pos / cinder::vec2(getWindowSize()),
@@ -433,7 +432,7 @@ void CovidSonificationApp::SetupInstruments() {
   // Set instruments as a parameter
   params_
       ->addParam("Instrument", kInstrumentNames,
-                 (int*)&instrument_enum_selection_)  // double check this line
+                 (int*)&instrument_selection_)
       .keyDecr("[")
       .keyIncr("]")
       .updateFn([this] {
@@ -644,9 +643,8 @@ void CovidSonificationApp::DisplayVisualizationToggle() {
 }
 
 void CovidSonificationApp::DrawNoteData() {
-  // TODO: allow user to choose color
   const size_t point_size = 3;
-  cinder::gl::color(cinder::Color(1, 0, 0));  // red for now
+  cinder::gl::color(cinder::ColorA(1, 0, 0, 0.75));  // red
 
   // Draw previous data points
   for (size_t i = 0; i < current_date_index_; i++) {

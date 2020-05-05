@@ -44,14 +44,14 @@ class CovidSonificationApp : public cinder::app::App {
   */
  public:
   void SetupParams();
-  void MakeNote(const cinder::vec2 &pos);
+  void MakeNote(const cinder::vec2& pos);
   void MakeNoteFromAmount(int amount, int max_amount);
   float QuantizePitch(const cinder::vec2 &pos);
   float QuantizePitchFromAmount(int amount, int max_amount);
   void StopNote();
   void HandleInstrumentsSelected();
   void HandleEffectSelected();
-  bool HandleInstrumentSpecificNote(const cinder::vec2 &pos);
+  bool HandleInstrumentSpecificNote(const cinder::vec2& pos);
   void HandleDataSelected();
   void HandleRegionSelected();
   void HandleScaleSelected();
@@ -137,7 +137,7 @@ class CovidSonificationApp : public cinder::app::App {
   bool is_visualizing = true;
 
   // Audio synthesis params (set to initial values)
-  size_t instrument_enum_selection_ = 4;
+  size_t instrument_selection_ = 4;
   size_t effect_enum_selection = 0;
   size_t dataset_selection_ = 0;
   size_t region_selection_ = 0;
