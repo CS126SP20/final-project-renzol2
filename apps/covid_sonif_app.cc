@@ -354,8 +354,7 @@ void CovidSonificationApp::HandleDataSelected() {
         region_names_ = current_data_.GetRegions();
         SetupDataSonificationParams();
         HandleRegionSelected();
-
-        max_amount_ = GetHighestAmountInData(current_data_, false);
+        HandleUpperBoundSelected();
 
         break;
       }
@@ -375,6 +374,21 @@ void CovidSonificationApp::HandleScaleSelected() {
       current_scale_ = scale;
       break;
     }
+  }
+}
+
+void CovidSonificationApp::HandleUpperBoundSelected() {
+  if (current_region_.GetRegionName() == "World") {
+    max_amount_ = GetHighestAmountInData(current_data_, true);
+    return;
+  }
+
+  if (max_value_selection_ == kRegionalMax) {
+    max_amount_ = GetHighestRegionalAmount(current_region_);
+  } else if (max_value_selection_ == kInternationalMax) {
+    max_amount_ = GetHighestAmountInData(current_data_, false);
+  } else if (max_value_selection_ == kCumulativeMax) {
+    max_amount_ = GetHighestAmountInData(current_data_, true);
   }
 }
 
@@ -595,6 +609,17 @@ void CovidSonificationApp::SetupBpm() {
       .step(1);
 }
 
+void CovidSonificationApp::SetupUpperBound() {
+  params_
+      ->addParam("Upper bound", kMaxValueSettingNames, (int*)&max_value_selection_)
+      .keyDecr("z")
+      .keyIncr("x")
+      .updateFn([this] {
+        HandleUpperBoundSelected();
+        PrintAudioGraph();
+      });
+}
+
 void CovidSonificationApp::AssignBpm(size_t set_bpm) {
   if (set_bpm >= kMinBpm && set_bpm <= kMaxBpm) bpm_ = set_bpm;
 }
@@ -602,16 +627,26 @@ void CovidSonificationApp::AssignBpm(size_t set_bpm) {
 void CovidSonificationApp::SetupDataSonificationParams() {
   SetupRegions();
   SetupBpm();
+  SetupUpperBound();
   SetupVisualizeButton();
   SetupVisualizationScaling();
   SetupSonifyButton();
 }
 
+void CovidSonificationApp::RemoveDataSonificationParams() {
+  params_->removeParam("Region");
+  params_->removeParam("BPM");
+  params_->removeParam("Upper bound");
+  params_->removeParam("Toggle visualization");
+  params_->removeParam("Visualization height scale");
+  params_->removeParam("Visualization width scale");
+  params_->removeParam("Sonify!");
+}
+
 void CovidSonificationApp::SonifyData() {
   if (dataset_selection_ == 0) return;
 
-  max_amount_ = GetHighestAmountInData(
-      current_data_, current_region_.GetRegionName() == "World");
+  HandleUpperBoundSelected();  // assign max amount
 
   int ms = ConvertBpmToMilliseconds(bpm_);
   interval = std::chrono::milliseconds(ms);
@@ -746,13 +781,7 @@ void CovidSonificationApp::StopNote() {
   }
 }
 
-void CovidSonificationApp::RemoveDataSonificationParams() {
-  params_->removeParam("Region");
-  params_->removeParam("BPM");
-  params_->removeParam("Toggle visualization");
-  params_->removeParam("Visualization scale");
-  params_->removeParam("Sonify!");
-}
+
 
 // Taken directly from the CS 126 Snake Project
 void CovidSonificationApp::ShowText(const std::string& text,
@@ -810,6 +839,5 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
   // Total window space occupied by visualization is centered
   return {x, y};
 }
-
 
 }  // namespace covidsonifapp

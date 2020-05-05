@@ -55,6 +55,7 @@ class CovidSonificationApp : public cinder::app::App {
   void HandleDataSelected();
   void HandleRegionSelected();
   void HandleScaleSelected();
+  void HandleUpperBoundSelected();
   void SonifyData();
   static void PrintAudioGraph();
   void DisplayDirections();
@@ -80,9 +81,10 @@ class CovidSonificationApp : public cinder::app::App {
   void SetMinPitch(size_t new_pitch);
   void SetupScale();
   void SetupBpm();
-  void SetupSonifyButton();
+  void SetupUpperBound();
   void SetupVisualizationScaling();
   void SetupVisualizeButton();
+  void SetupSonifyButton();
   void AssignBpm(size_t set_bpm);
   void AssignHeightScaling(float new_scaling);
   void AssignWidthScaling(float new_scaling);
@@ -149,6 +151,7 @@ class CovidSonificationApp : public cinder::app::App {
   size_t dataset_selection_ = 0;
   size_t region_selection_ = 0;
   size_t scale_selection_ = 4;
+  size_t max_value_selection_ = 1;
 
   float last_freq_ = 0;
 
@@ -181,6 +184,16 @@ class CovidSonificationApp : public cinder::app::App {
       "Daily increase of COVID-19 deaths",
       "Total COVID-19 cases",
       "Total COVID-19 deaths"
+  };
+
+  const size_t kRegionalMax = 0;
+  const size_t kInternationalMax = 1;
+  const size_t kCumulativeMax = 2;
+
+  const std::vector<std::string> kMaxValueSettingNames = {
+      "Regional maximum",
+      "International maximum",
+      "Cumulative maximum"
   };
 
  /*
