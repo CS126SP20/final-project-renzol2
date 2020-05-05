@@ -84,7 +84,8 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupVisualizationScaling();
   void SetupVisualizeButton();
   void AssignBpm(size_t set_bpm);
-  void AssignVisualizationScaling(float new_scaling);
+  void AssignHeightScaling(float new_scaling);
+  void AssignWidthScaling(float new_scaling);
   void SetupDataSonificationParams();
   void RemoveDataSonificationParams();
   void HandleNote(float freq, float gain);
@@ -135,7 +136,8 @@ class CovidSonificationApp : public cinder::app::App {
   std::chrono::milliseconds interval;
 
   // Visualization parameters
-  float visualization_scaling_ = 1.0f;
+  float visualization_height_scaling_ = 1.0f;
+  float visualization_width_scaling_ = 1.0f;
 
   bool in_sonification_playback = false;
   bool finished_playback = false;

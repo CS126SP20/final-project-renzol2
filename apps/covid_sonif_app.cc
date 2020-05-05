@@ -501,18 +501,34 @@ void CovidSonificationApp::SetupSonifyButton() {
 void CovidSonificationApp::SetupVisualizationScaling() {
   params_
       ->addParam<float>(
-          "Visualization scale",
-          [this] (float value) { AssignVisualizationScaling(value); },
-          [this] { return visualization_scaling_; })
+          "Visualization height scale",
+          [this] (float value) { AssignHeightScaling(value); },
+          [this] { return visualization_height_scaling_; })
+      .min(kMinVisualizationScaling)
+      .max(kMaxVisualizationScaling)
+      .step(0.05f);
+
+  params_
+      ->addParam<float>(
+          "Visualization width scale",
+          [this] (float value) { AssignWidthScaling(value); },
+          [this] { return visualization_width_scaling_; })
       .min(kMinVisualizationScaling)
       .max(kMaxVisualizationScaling)
       .step(0.05f);
 }
 
-void CovidSonificationApp::AssignVisualizationScaling(float new_scaling) {
+void CovidSonificationApp::AssignHeightScaling(float new_scaling) {
   if (new_scaling >= kMinVisualizationScaling &&
       new_scaling <= kMaxVisualizationScaling) {
-    visualization_scaling_ = new_scaling;
+    visualization_height_scaling_ = new_scaling;
+  }
+}
+
+void CovidSonificationApp::AssignWidthScaling(float new_scaling) {
+  if (new_scaling >= kMinVisualizationScaling &&
+      new_scaling <= kMaxVisualizationScaling) {
+    visualization_width_scaling_ = new_scaling;
   }
 }
 
@@ -775,7 +791,7 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
       (float)0,
       (float)current_region_.GetDates().size(),
       0.0f,
-      (float)getWindowWidth() * visualization_scaling_));
+      (float)getWindowWidth() * visualization_width_scaling_));
 
   // Map min/max MIDI pitch to the screen height position and find converted value
   int y = std::lroundf(cinder::lmap(
@@ -783,7 +799,7 @@ cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
       0.0f,
       (float)max_amount_,
       (float)getWindowHeight(),
-      0.0f + (1.0f - visualization_scaling_) * (float)getWindowHeight()));
+      0.0f + (1.0f - visualization_height_scaling_) * (float)getWindowHeight()));
 
   return {x, y};
 }
