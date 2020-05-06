@@ -37,9 +37,9 @@ Cinder-Stk's [test application](https://github.com/richardeakin/Cinder-Stk/blob/
 All settings can be changed in-application through the cursor.
 
 <h2>Data Sources</h2>
-
 COVID-19 (Coronavirus) data is courtesy of 
-[Our World In Data](https://ourworldindata.org/coronavirus-source-data)
+[Our World In Data](https://ourworldindata.org/coronavirus-source-data).
 ---
-*Hannah Ritchie (2019) - "Coronavirus Source Data". Published online at OurWorldInData.org. Retrieved from: 'https://ourworldindata.org/coronavirus-source-data' [Online Resource]*
+*Hannah Ritchie (2019) - "Coronavirus Source Data". 
+Published online at OurWorldInData.org. Retrieved from: 'https://ourworldindata.org/coronavirus-source-data' [Online Resource]*
 
