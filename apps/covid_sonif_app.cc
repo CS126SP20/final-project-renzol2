@@ -222,6 +222,10 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
     }
   }
 
+  // Apply bounds for pitches (Cinder does not automatically set bounds)
+  if (pitch_midi > max_midi_pitch_) pitch_midi = max_midi_pitch_;
+  else if (pitch_midi < min_midi_pitch_) pitch_midi = min_midi_pitch_;
+
   // Set current pitch for display
   current_midi_pitch_ = pitch_midi;
 
