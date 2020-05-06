@@ -43,3 +43,24 @@
     - Visualization now stays after playback until user clicks anywhere
     - Settings are now hidden during visualization
     - Regions list in settings is now displayed in descending order by max amount
+    
+- **5/5/2020** Added final changes in preparation for submission
+    - Added total of 8 new datasets for a final total of 12 datasets available
+      for sonification playback
+        - Total cases per million
+        - Total deaths per million
+        - Daily increase of cases per million
+        - Daily increase of deaths per million
+        - Total tests
+        - Daily change in tests
+        - Total tests per thousand
+        - Daily change in tests per thousand
+    - Visualization can now be scaled by a percentage of screen height/width
+    - Visualization graph can now be colored by user using RGBA values
+    - Fixed bug where pitches lower/higher than set min/max were possible by 
+      moving cursor out of the application window
+    - Different upper bounds were added, which affect sonification and visualization
+      - Regional maximum (maximum pitch mapped to highest point in current regional data)
+      - International maximum (max pitch mapped to highest point in all regional data)
+      - Cumulative maximum (max pitch mapped to highest cumulative point)
+    
