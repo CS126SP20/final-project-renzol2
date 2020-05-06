@@ -531,6 +531,44 @@ void CovidSonificationApp::SetupVisualizationScaling() {
       .step(0.05f);
 }
 
+void CovidSonificationApp::SetupRgba() {
+  const float min = 0.0f;
+  const float max = 1.0f;
+  const float step = 0.01f;
+
+  params_->addParam<float>(
+          "R",
+          [this] (float value) { red_ = value; },
+          [this] { return red_; })
+      .min(min)
+      .max(max)
+      .step(step);
+
+  params_->addParam<float>(
+      "G",
+      [this] (float value) { green_ = value; },
+      [this] { return green_; })
+      .min(min)
+      .max(max)
+      .step(step);
+
+  params_->addParam<float>(
+      "B",
+      [this] (float value) { blue_ = value; },
+      [this] { return blue_; })
+      .min(min)
+      .max(max)
+      .step(step);
+
+  params_->addParam<float>(
+      "Opacity",
+      [this] (float value) { opacity_ = value; },
+      [this] { return opacity_; })
+      .min(min)
+      .max(max)
+      .step(step);
+}
+
 void CovidSonificationApp::AssignHeightScaling(float new_scaling) {
   if (new_scaling >= kMinVisualizationScaling &&
       new_scaling <= kMaxVisualizationScaling) {
@@ -630,6 +668,7 @@ void CovidSonificationApp::SetupDataSonificationParams() {
   SetupUpperBound();
   SetupVisualizeButton();
   SetupVisualizationScaling();
+  SetupRgba();
   SetupSonifyButton();
 }
 
@@ -640,6 +679,10 @@ void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Toggle visualization");
   params_->removeParam("Visualization height scale");
   params_->removeParam("Visualization width scale");
+  params_->removeParam("R");
+  params_->removeParam("G");
+  params_->removeParam("B");
+  params_->removeParam("Opacity");
   params_->removeParam("Sonify!");
 }
 
@@ -738,7 +781,7 @@ void CovidSonificationApp::DisplayVisualizationToggle() {
 
 void CovidSonificationApp::DrawNoteData() {
   const size_t point_size = 3;
-  cinder::gl::color(cinder::ColorA(1, 0, 0, 0.75));  // red
+  cinder::gl::color(cinder::ColorA(red_, green_, blue_, opacity_));  // red
 
   // Draw previous data points
   for (size_t i = 0; i < current_date_index_; i++) {

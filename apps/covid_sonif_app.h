@@ -83,6 +83,7 @@ class CovidSonificationApp : public cinder::app::App {
   void SetupBpm();
   void SetupUpperBound();
   void SetupVisualizationScaling();
+  void SetupRgba();
   void SetupVisualizeButton();
   void SetupSonifyButton();
   void AssignBpm(size_t set_bpm);
@@ -140,6 +141,10 @@ class CovidSonificationApp : public cinder::app::App {
   // Visualization parameters
   float visualization_height_scaling_ = 1.0f;
   float visualization_width_scaling_ = 1.0f;
+  float red_ = 1.0f;
+  float green_ = 0.0f;
+  float blue_ = 0.0f;
+  float opacity_ = 0.75f;
 
   bool in_sonification_playback = false;
   bool finished_playback = false;
