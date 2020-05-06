@@ -36,10 +36,16 @@ Cinder-Stk's [test application](https://github.com/richardeakin/Cinder-Stk/blob/
 
 All settings can be changed in-application through the cursor.
 
-<h2>Data Sources</h2>
+<h2>Sources</h2>
+
 COVID-19 (Coronavirus) data is courtesy of 
 [Our World In Data](https://ourworldindata.org/coronavirus-source-data).
----
+
+
 *Hannah Ritchie (2019) - "Coronavirus Source Data". 
 Published online at OurWorldInData.org. Retrieved from: 'https://ourworldindata.org/coronavirus-source-data' [Online Resource]*
 
+Synthesis ToolKit (STK) is written by Perry R. Cook & Gary P. Scavone.
+
+Cinder-Stk is written by [Richard Eakin](https://rteakin.com/).
+His Github can be found [here](https://github.com/richardeakin).
