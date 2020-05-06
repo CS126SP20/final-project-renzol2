@@ -18,11 +18,13 @@ This application's foundation is based off of
 Cinder-Stk's [test application](https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp).
 
 <h2>Dependencies</h2>
+
 - [cmake](https://cmake.org/)
 - [Visual Studio 2019](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 - [Cinder-Stk](https://github.com/richardeakin/Cinder-Stk)
 
 <h2>Usage</h2>
+
 | Key           | Action                       |
 |---------------|------------------------------|
 | `[` `]`       | Change instrument            |
@@ -35,6 +37,7 @@ Cinder-Stk's [test application](https://github.com/richardeakin/Cinder-Stk/blob/
 All settings can be changed in-application through the cursor.
 
 <h2>Data Sources</h2>
+
 COVID-19 (Coronavirus) data is courtesy of 
 [Our World In Data](https://ourworldindata.org/coronavirus-source-data)
 ---
