@@ -63,4 +63,7 @@
       - Regional maximum (maximum pitch mapped to highest point in current regional data)
       - International maximum (max pitch mapped to highest point in all regional data)
       - Cumulative maximum (max pitch mapped to highest cumulative point)
+      
+- **5/6/2020** Finalized documentation and comments across all source files. Also 
+               wrote out DEVELOPMENT.md, README.md, and PROPOSAL.md. 
     
