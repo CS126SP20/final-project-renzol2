@@ -20,14 +20,15 @@
 
 namespace covidsonifapp {
 
-/*
- * Application that sonifies COVID-19 Data
+/**
+ * Application that allows sonification and visualization of COVID-19 data about
+ * confirmed cases, deaths, and testing courtesy of Our World In Data.
  *
  * Audio synthesis using source code from the StkTestApp:
  * https://github.com/richardeakin/Cinder-Stk/blob/master/samples/StkTest/src/StkTestApp.cpp
  */
 class CovidSonificationApp : public cinder::app::App {
- /*
+ /**
   * Constructor and Cinder Application Overriden functions
   */
  public:
@@ -39,7 +40,7 @@ class CovidSonificationApp : public cinder::app::App {
   void mouseDrag(cinder::app::MouseEvent event) override;
   void mouseUp(cinder::app::MouseEvent event) override;
 
- /*
+ /**
   * Public functions
   */
  public:
@@ -66,7 +67,7 @@ class CovidSonificationApp : public cinder::app::App {
   void DrawNoteData();
 
 
- /*
+ /**
   * Private helper functions
   */
  private:
@@ -100,7 +101,7 @@ class CovidSonificationApp : public cinder::app::App {
   static int ConvertBpmToMilliseconds(int bpm);
   cinder::vec2 ConvertDataPointToPosition(size_t date_index, float amount);
 
- /*
+ /**
   * Internal structure class for scales
   */
  private:
@@ -110,7 +111,7 @@ class CovidSonificationApp : public cinder::app::App {
     size_t scale_length;
   };
 
- /*
+ /**
   * Instance variables
   */
  private:
@@ -160,7 +161,7 @@ class CovidSonificationApp : public cinder::app::App {
 
   float last_freq_ = 0;
 
- /*
+ /**
   * Names for parameters
   */
  private:
@@ -229,7 +230,7 @@ class CovidSonificationApp : public cinder::app::App {
       "Cumulative maximum"
   };
 
- /*
+ /**
   * Scale information
   */
  private:

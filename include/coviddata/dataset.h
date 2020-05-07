@@ -18,6 +18,12 @@ const int kNullAmount = -1;
 
 /**
  * Represents global and country-specific data for COVID-19.
+ *
+ * DataSet takes in a .csv file with following format:
+ *   Date,country1,country2,country3... (header)
+ *   2020-05-06,100,0,2
+ *   ...
+ * and stores those values by region for ease of retrieval.
  */
 class DataSet {
  public:

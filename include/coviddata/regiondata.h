@@ -25,6 +25,7 @@ class RegionData {
   std::vector<std::string> GetDates() const;
   size_t GetRegionIndex() const;
   size_t Size() const;
+
  private:
   std::string region_name_;
   size_t region_index_;

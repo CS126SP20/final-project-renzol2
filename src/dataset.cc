@@ -11,8 +11,15 @@
 
 namespace coviddata {
 
+/**
+ * Default constructor
+ */
 DataSet::DataSet() : region_to_data_(), regions_() { }
 
+/**
+ * Imports data from a properly formatted .csv file.
+ * @param filename name of file to import data from
+ */
 void DataSet::ImportData(const std::string& filename) {
   // Reset before assigning data
   Reset();
@@ -50,24 +57,44 @@ void DataSet::ImportData(const std::string& filename) {
   }
 }
 
+/**
+ * Returns number of regions stored internally.
+ * @return number of regions
+ */
 size_t DataSet::Size() { return region_to_data_.size(); }
 
+/**
+ * Retrieves the data of a region by its name
+ * @param region_name name of region
+ * @return data corresponding with name
+ */
 coviddata::RegionData& DataSet::GetRegionDataByName(
     const std::string& region_name) const {
   const coviddata::RegionData& region_data = region_to_data_.at(region_name);
-  return const_cast<RegionData&>(region_data);  // double check this...
+  return const_cast<RegionData&>(region_data);
 }
 
+/**
+ * Retrieves a list of all regions contained in dataset
+ * @return vector of region names as strings
+ */
 std::vector<std::string>& DataSet::GetRegions() const {
   return (std::vector<std::string>&)regions_;
 }
 
+/**
+ * Clears all data from the dataset
+ */
 void DataSet::Reset() {
   region_to_data_.clear();
   regions_.clear();
   data_type_ = std::string();
 }
 
+/**
+ * Returns true if the dataset has no data.
+ * @return if dataset is empty
+ */
 bool DataSet::Empty() {
   return region_to_data_.empty() && regions_.empty() && data_type_.empty();
 }
@@ -93,6 +120,11 @@ void DataSet::InitializeRegionalData(coviddata::CsvParser::Line header) {
   }
 }
 
+/**
+ * Extracts numerical data as a float from a string
+ * @param num_string string containing numerical information
+ * @return numerical information as float
+ */
 float DataSet::GetNumberFromString(const std::string& num_string) {
   // Empty entries cannot be converted into integers
   if (num_string.empty())

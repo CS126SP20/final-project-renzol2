@@ -50,6 +50,9 @@ using cinder::app::KeyEvent;
 
 CovidSonificationApp::CovidSonificationApp() = default;
 
+/**
+ * Initializes Cinder-Stk/Cinder audio nodes and sets all parameters.
+ */
 void CovidSonificationApp::setup() {
   auto ctx = cinder::audio::master();
 
@@ -69,6 +72,9 @@ void CovidSonificationApp::setup() {
   PrintAudioGraph();
 }
 
+/**
+ * Iterates over dataset and sonifies information as/when needed.
+ */
 void CovidSonificationApp::update() {
   if (in_sonification_playback) {
     // Break statement; stops when no more dates are in the dataset
@@ -92,6 +98,9 @@ void CovidSonificationApp::update() {
   }
 }
 
+/**
+ * Draws all display components depending on state of app.
+ */
 void CovidSonificationApp::draw() {
   cinder::gl::clear();
 
@@ -110,6 +119,10 @@ void CovidSonificationApp::draw() {
   }
 }
 
+/**
+ * Plays a note based on mouse position and clears screen after playback.
+ * @param event mouse position
+ */
 void CovidSonificationApp::mouseDown(cinder::app::MouseEvent event) {
   if (finished_playback) {
     current_date_ = {};
@@ -119,10 +132,18 @@ void CovidSonificationApp::mouseDown(cinder::app::MouseEvent event) {
   MakeNote(event.getPos());
 }
 
+/**
+ * Plays a note based on mouse position.
+ * @param event mouse position
+ */
 void CovidSonificationApp::mouseDrag(cinder::app::MouseEvent event) {
   MakeNote(event.getPos());
 }
 
+/**
+ * Stops note upon release of mouse.
+ * @param event mouse position
+ */
 void CovidSonificationApp::mouseUp(cinder::app::MouseEvent event) {
   StopNote();
 }
@@ -131,6 +152,9 @@ void CovidSonificationApp::mouseUp(cinder::app::MouseEvent event) {
  * Stk-Cinder specific methods
  */
 
+/**
+ * Initializes all parameters.
+ */
 void CovidSonificationApp::SetupParams() {
   // Define parameters
   params_ = cinder::params::InterfaceGl::create(
@@ -152,6 +176,10 @@ void CovidSonificationApp::SetupParams() {
   SetupData();  // data-specific parameters handled only if data is selected
 }
 
+/**
+ * Calculates frequency and gain of note upon mouse click.
+ * @param pos mouse positino
+ */
 void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
   if (instrument_ && HandleInstrumentSpecificNote(pos)) {
     return;
@@ -170,6 +198,11 @@ void CovidSonificationApp::MakeNote(const cinder::vec2& pos) {
   HandleNote(freq, gain);
 }
 
+/**
+ * Calculates gain and frequency of note based on data.
+ * @param amount data amount to sonify
+ * @param max_amount maximum amount of dataset
+ */
 void CovidSonificationApp::MakeNoteFromAmount(float amount, float max_amount) {
   if (amount == coviddata::kNullAmount) return;
 
@@ -183,6 +216,11 @@ void CovidSonificationApp::MakeNoteFromAmount(float amount, float max_amount) {
   HandleNote(freq, gain);
 }
 
+/**
+ * Plays the note if an instrument is selected.
+ * @param freq frequency of note
+ * @param gain gain of note
+ */
 void CovidSonificationApp::HandleNote(float freq, float gain) {
   if (instrument_) {
     instrument_->noteOn(freq, gain);
@@ -190,9 +228,9 @@ void CovidSonificationApp::HandleNote(float freq, float gain) {
 }
 
 /**
- * Returns a quantized pitch (in hertz) within the C minor scale
+ * Returns a quantized pitch (in hertz) based on mouse position.
  * @param pos position of mouse
- * @return quantized pitch in C minor scale
+ * @return quantized pitch in selected scale
  */
 float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
   // Creates a mapping from height of mouse on screen to MIDI pitch,
@@ -232,6 +270,12 @@ float CovidSonificationApp::QuantizePitch(const cinder::vec2& pos) {
   return cinder::audio::midiToFreq((float)pitch_midi);
 }
 
+/**
+ * Returns a quantized pitch (Hz) based on given data.
+ * @param amount data amount
+ * @param max_amount maximum amount
+ * @return quantized pitch in Hz within selected scale
+ */
 float CovidSonificationApp::QuantizePitchFromAmount(float amount,
                                                     float max_amount) {
   // Creates a mapping from [0, highest amount in data]
@@ -267,6 +311,9 @@ float CovidSonificationApp::QuantizePitchFromAmount(float amount,
   return cinder::audio::midiToFreq((float)pitch_midi);
 }
 
+/**
+ * Assigns instrument based on user selection.
+ */
 void CovidSonificationApp::HandleInstrumentsSelected() {
   // Disconnect all currently used instrument_s
   if (instrument_) instrument_->disconnectAll();
@@ -305,6 +352,9 @@ void CovidSonificationApp::HandleInstrumentsSelected() {
   master_gain_ >> ctx->getOutput();
 }
 
+/**
+ * Assigns effect based on user selection.
+ */
 void CovidSonificationApp::HandleEffectSelected() {
   // Effects can only be applied if a sound is played.
   CI_ASSERT( instrument_ );
@@ -337,6 +387,9 @@ void CovidSonificationApp::HandleEffectSelected() {
   effect_ >> master_gain_ >> ctx->getOutput();
 }
 
+/**
+ * Handles dataset loading based on user selection.
+ */
 void CovidSonificationApp::HandleDataSelected() {
   current_data_.Reset();
 
@@ -366,12 +419,18 @@ void CovidSonificationApp::HandleDataSelected() {
   }
 }
 
+/**
+ * Assigns region based on user selection.
+ */
 void CovidSonificationApp::HandleRegionSelected() {
   current_region_ = current_data_.GetRegionDataByName(
       region_names_.at(region_selection_)
       );
 }
 
+/**
+ * Assigns scale based on user selection.
+ */
 void CovidSonificationApp::HandleScaleSelected() {
   for (const Scale& scale : kScales) {
     if (kScaleNames.at(scale_selection_) == scale.scale_name) {
@@ -381,6 +440,9 @@ void CovidSonificationApp::HandleScaleSelected() {
   }
 }
 
+/**
+ * Handles the upper bound of data visualization/sonification based on selection.
+ */
 void CovidSonificationApp::HandleUpperBoundSelected() {
   if (current_region_.GetRegionName() == "World") {
     max_amount_ = GetHighestAmountInData(current_data_, true);
@@ -402,12 +464,7 @@ void CovidSonificationApp::HandleUpperBoundSelected() {
  */
 
 /**
- * Cinder-Stk Documentation: Returns true if the note was handled completely and
- * makeNote() shouldn't do anything else
- *
- * Renzo: I believe this handles an edge case where two specific instruments
- * (being Mesh2D and ModalBar) have to be dealt with individually... not sure tho
- * @param pos position of... mouse?
+ * Changes note based on instrument edge cases.
  */
 bool CovidSonificationApp::HandleInstrumentSpecificNote(const cinder::vec2& pos) {
   // Not sure what this does yet...
@@ -432,11 +489,17 @@ bool CovidSonificationApp::HandleInstrumentSpecificNote(const cinder::vec2& pos)
   return false;
 }
 
+/**
+ * Prints the audio graph to Cinder's console.
+ */
 void CovidSonificationApp::PrintAudioGraph() {
   CI_LOG_I("\n" << cinder::audio::master()->printGraphToString());
   std::cout << cinder::audio::master()->printGraphToString() << std::endl;
 }
 
+/**
+ * Initializes the master gain.
+ */
 void CovidSonificationApp::SetupMasterGain() {
   // Add master gain as a parameter
   params_
@@ -448,6 +511,9 @@ void CovidSonificationApp::SetupMasterGain() {
       .step(0.05f);
 }
 
+/**
+ * Initializes list of instruments as a parameter.
+ */
 void CovidSonificationApp::SetupInstruments() {
   // Set instruments as a parameter
   params_
@@ -461,6 +527,9 @@ void CovidSonificationApp::SetupInstruments() {
       });
 }
 
+/**
+ * Initializes list of instruments as a parameter.
+ */
 void CovidSonificationApp::SetupEffects() {
   // Add effects as parameter
   params_->addParam("Effect", kEffectNames, (int*)&effect_enum_selection)
@@ -472,6 +541,9 @@ void CovidSonificationApp::SetupEffects() {
       });
 }
 
+/**
+ * Initializes list of datasets as parameter.
+ */
 void CovidSonificationApp::SetupData() {
   params_->addParam("Data", kDatasetNames, (int*)&dataset_selection_)
       .keyDecr("t")
@@ -482,7 +554,9 @@ void CovidSonificationApp::SetupData() {
       });
 }
 
-
+/**
+ * Initializes list of regions as parameter when necessary.
+ */
 void CovidSonificationApp::SetupRegions() {
   // Data must be populated for regions to be setup
   if (current_data_.Empty()) return;
@@ -509,12 +583,18 @@ void CovidSonificationApp::SetupRegions() {
       });
 }
 
+/**
+ * Sets up button to begin sonification playback.
+ */
 void CovidSonificationApp::SetupSonifyButton() {
   params_->addButton("Sonify!", [this] {
     SonifyData();
   });
 }
 
+/**
+ * Sets up visualization scaling parameters.
+ */
 void CovidSonificationApp::SetupVisualizationScaling() {
   params_
       ->addParam<float>(
@@ -535,6 +615,9 @@ void CovidSonificationApp::SetupVisualizationScaling() {
       .step(0.05f);
 }
 
+/**
+ * Sets up RGBA value parameters for visualization.
+ */
 void CovidSonificationApp::SetupRgba() {
   const float min = 0.0f;
   const float max = 1.0f;
@@ -573,6 +656,10 @@ void CovidSonificationApp::SetupRgba() {
       .step(step);
 }
 
+/**
+ * Assigns height scaling based on new value.
+ * @param new_scaling new value
+ */
 void CovidSonificationApp::AssignHeightScaling(float new_scaling) {
   if (new_scaling >= kMinVisualizationScaling &&
       new_scaling <= kMaxVisualizationScaling) {
@@ -580,6 +667,10 @@ void CovidSonificationApp::AssignHeightScaling(float new_scaling) {
   }
 }
 
+/**
+ * Assigns width scaling based on new value.
+ * @param new_scaling new value
+ */
 void CovidSonificationApp::AssignWidthScaling(float new_scaling) {
   if (new_scaling >= kMinVisualizationScaling &&
       new_scaling <= kMaxVisualizationScaling) {
@@ -587,12 +678,18 @@ void CovidSonificationApp::AssignWidthScaling(float new_scaling) {
   }
 }
 
+/**
+ * Sets up visualization button as parameter.
+ */
 void CovidSonificationApp::SetupVisualizeButton() {
   params_->addButton("Toggle visualization", [this] {
     is_visualizing = !is_visualizing;
   });
 }
 
+/**
+ * Sets the maximum MIDI pitch parameter.
+ */
 void CovidSonificationApp::SetupMaxMidiPitchParam() {
   params_
       ->addParam<size_t>(
@@ -604,6 +701,10 @@ void CovidSonificationApp::SetupMaxMidiPitchParam() {
       .step(1);
 }
 
+/**
+ * Sets the maximum pitch within bounds of MIDI pitch.
+ * @param new_pitch new pitch
+ */
 void CovidSonificationApp::SetMaxPitch(size_t new_pitch) {
   bool valid_midi_num =
       new_pitch >= kAbsoluteMinPitchMidi && new_pitch <= kAbsoluteMaxPitchMidi;
@@ -612,7 +713,9 @@ void CovidSonificationApp::SetMaxPitch(size_t new_pitch) {
     max_midi_pitch_ = new_pitch;
 }
 
-
+/**
+ * Sets the minimum MIDI pitch parameter.
+ */
 void CovidSonificationApp::SetupMinMidiPitchParam() {
   params_
       ->addParam<size_t>(
@@ -624,6 +727,10 @@ void CovidSonificationApp::SetupMinMidiPitchParam() {
       .step(1);
 }
 
+/**
+ * Sets the minimum pitch within bounds of MIDI pitch.
+ * @param new_pitch new pitch
+ */
 void CovidSonificationApp::SetMinPitch(size_t new_pitch) {
   bool valid_midi_num =
       new_pitch >= kAbsoluteMinPitchMidi && new_pitch <= kAbsoluteMaxPitchMidi;
@@ -632,6 +739,9 @@ void CovidSonificationApp::SetMinPitch(size_t new_pitch) {
     min_midi_pitch_ = new_pitch;
 }
 
+/**
+ * Sets up the list of available scales as a parameter.
+ */
 void CovidSonificationApp::SetupScale() {
   params_->addParam("Scale", kScaleNames, (int*)&scale_selection_)
       .updateFn([this] {
@@ -640,6 +750,9 @@ void CovidSonificationApp::SetupScale() {
       });
 }
 
+/**
+ * Sets the BPM of playback as a parameter.
+ */
 void CovidSonificationApp::SetupBpm() {
   params_
       ->addParam<int>(
@@ -651,6 +764,9 @@ void CovidSonificationApp::SetupBpm() {
       .step(1);
 }
 
+/**
+ * Sets the upper bound of visualization/sonification playback as a parameter.
+ */
 void CovidSonificationApp::SetupUpperBound() {
   params_
       ->addParam("Upper bound", kMaxValueSettingNames, (int*)&max_value_selection_)
@@ -662,10 +778,17 @@ void CovidSonificationApp::SetupUpperBound() {
       });
 }
 
+/**
+ * Assigns the BPM of playback within set bounds.
+ * @param set_bpm new BPM
+ */
 void CovidSonificationApp::AssignBpm(size_t set_bpm) {
   if (set_bpm >= kMinBpm && set_bpm <= kMaxBpm) bpm_ = set_bpm;
 }
 
+/**
+ * Sets up all data sonification params in order.
+ */
 void CovidSonificationApp::SetupDataSonificationParams() {
   SetupRegions();
   SetupBpm();
@@ -676,6 +799,9 @@ void CovidSonificationApp::SetupDataSonificationParams() {
   SetupSonifyButton();
 }
 
+/**
+ * Removes all data sonification params in order.
+ */
 void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Region");
   params_->removeParam("BPM");
@@ -690,6 +816,9 @@ void CovidSonificationApp::RemoveDataSonificationParams() {
   params_->removeParam("Sonify!");
 }
 
+/**
+ * Changes app state for update() to begin sonification playback.
+ */
 void CovidSonificationApp::SonifyData() {
   if (dataset_selection_ == 0) return;
 
@@ -703,6 +832,9 @@ void CovidSonificationApp::SonifyData() {
   in_sonification_playback = true;
 }
 
+/**
+ * Displays the centered directions.
+ */
 void CovidSonificationApp::DisplayDirections() {
   std::string directions =
       "Select a dataset and press 'Sonify' to hear how it sounds.\n"
@@ -715,6 +847,9 @@ void CovidSonificationApp::DisplayDirections() {
   ShowText(directions, color, size, center);
 }
 
+/**
+ * Displays pitch information.
+ */
 void CovidSonificationApp::DisplayPitch() {
   std::stringstream pitch_message;
   if (current_midi_pitch_ > kAbsoluteMaxPitchMidi) {
@@ -730,6 +865,9 @@ void CovidSonificationApp::DisplayPitch() {
   ShowText(pitch_message.str(), color, size, location);
 }
 
+/**
+ * Displays the currently selected dataset.
+ */
 void CovidSonificationApp::DisplayCurrentDataset() {
   // No display necessary if no dataset is selected
   if (dataset_selection_ == 0) return;
@@ -748,6 +886,9 @@ void CovidSonificationApp::DisplayCurrentDataset() {
            size, location);
 }
 
+/**
+ * Displays the current data during sonification playback.
+ */
 void CovidSonificationApp::DisplayCurrentNoteData() {
   if (dataset_selection_ == 0) return;
 
@@ -771,7 +912,9 @@ void CovidSonificationApp::DisplayCurrentNoteData() {
   ShowText(note_data_message.str(), cinder::Color::white(), size, location);
 }
 
-
+/**
+ * Displays whether visualization is toggled on or off.
+ */
 void CovidSonificationApp::DisplayVisualizationToggle() {
   if (dataset_selection_ == 0) return;
 
@@ -783,6 +926,9 @@ void CovidSonificationApp::DisplayVisualizationToggle() {
   ShowText(message.str(), cinder::Color::white(), size, location);
 }
 
+/**
+ * Draws points representing the data being sonified.
+ */
 void CovidSonificationApp::DrawNoteData() {
   const size_t point_size = 3;
   cinder::gl::color(cinder::ColorA(red_, green_, blue_, opacity_));  // red
@@ -801,6 +947,11 @@ void CovidSonificationApp::DrawNoteData() {
   }
 }
 
+/**
+ * Finds the highest data point within a regional dataset.
+ * @param rd regional data
+ * @return highest amount
+ */
 float CovidSonificationApp::GetHighestRegionalAmount(
     const coviddata::RegionData& rd) {
   // Find highest note of regional dataset
@@ -814,6 +965,12 @@ float CovidSonificationApp::GetHighestRegionalAmount(
   return max_amount;
 }
 
+/**
+ * Returns highest amount of all regional data in a dataset
+ * @param ds dataset
+ * @param include_world whether to include the world
+ * @return highest amount in dataset
+ */
 float CovidSonificationApp::GetHighestAmountInData(const coviddata::DataSet& ds,
                                                  bool include_world) {
   float max_amount = 0;
@@ -831,15 +988,22 @@ float CovidSonificationApp::GetHighestAmountInData(const coviddata::DataSet& ds,
   return max_amount;
 }
 
+/**
+ * Stops the currently played note.
+ */
 void CovidSonificationApp::StopNote() {
   if (instrument_) {
     instrument_->noteOff(0.5);
   }
 }
 
-
-
-// Taken directly from the CS 126 Snake Project
+/**
+ * Displays text with given parameters.
+ * @param text text to display
+ * @param color color of text
+ * @param size size of text box
+ * @param loc location of text on screen
+ */
 void CovidSonificationApp::ShowText(const std::string& text,
                                     const cinder::Color& color,
                                     const glm::ivec2& size,
@@ -861,12 +1025,23 @@ void CovidSonificationApp::ShowText(const std::string& text,
   cinder::gl::draw(texture, locp);
 }
 
+/**
+ * Converts BPM to millisecond interval between beats as interval
+ * @param bpm beats per minute
+ * @return interval in milliseconds
+ */
 int CovidSonificationApp::ConvertBpmToMilliseconds(int bpm) {
   const int seconds_per_minute = 60;
   const int ms_per_second = 1000;
   return (seconds_per_minute * ms_per_second) / bpm;
 }
 
+/**
+ * Converts a datapoint to a position on screen based on maximum data point
+ * @param date_index index of date within dates list
+ * @param amount amount to sonify
+ * @return position on screen to place visualization point
+ */
 cinder::vec2 CovidSonificationApp::ConvertDataPointToPosition(size_t date_index,
                                                               float amount) {
   float total_width_empty = (1.0f - visualization_width_scaling_);
