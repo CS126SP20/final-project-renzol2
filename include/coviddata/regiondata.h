@@ -11,8 +11,9 @@
 
 namespace coviddata {
 
-/*
- * Holds COVID-19 data for a specific region (global/country-specific)
+/**
+ * Holds COVID-19 data for a specific region by assigning dates in format
+ * [year]-[month]-[date] (ex. 2020-05-05) to an amount (float).
  */
 class RegionData {
  public:

@@ -10,8 +10,14 @@
 
 namespace coviddata {
 
+/**
+ * Reads and stores values from CSV files
+ */
 class CsvParser {
  public:
+  /**
+   * Internal structure that stores values of a single CSV line
+   */
   struct Line {
     std::vector<std::string> values{};
   };

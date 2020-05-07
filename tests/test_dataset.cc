@@ -96,11 +96,3 @@ TEST_CASE("DataSet accurately parses data in test file") {
     }
   }
 }
-
-TEST_CASE("TEST") {
-  coviddata::DataSet data_set;
-  data_set.ImportData(
-      R"(C:\Program Files\Cinder\my-projects\final-project-renzol2\tests\assets\data\total_cases.csv)");
-
-
-}

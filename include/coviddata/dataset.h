@@ -16,7 +16,7 @@ namespace coviddata {
 
 const int kNullAmount = -1;
 
-/*
+/**
  * Represents global and country-specific data for COVID-19.
  */
 class DataSet {

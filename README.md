@@ -21,6 +21,7 @@ Cinder-Stk's [test application](https://github.com/richardeakin/Cinder-Stk/blob/
 
 - [cmake](https://cmake.org/)
 - [Visual Studio 2019](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+- [Cinder](https://libcinder.org/)
 - [Cinder-Stk](https://github.com/richardeakin/Cinder-Stk)
 
 <h2>Usage</h2>
